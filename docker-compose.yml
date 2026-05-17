@@ -1,0 +1,27 @@
+services:
+  reloop:
+    # Default: build the combined image (API + dashboard) from this repo.
+    # To run a published image instead, set RELOOP_IMAGE and run without
+    # --build, e.g. RELOOP_IMAGE=ghcr.io/<owner>/reloop:latest docker compose up -d
+    image: ${RELOOP_IMAGE:-reloop:local}
+    build: .
+    ports:
+      - "${RELOOP_PORT:-8787}:8787"
+    volumes:
+      - reloop-data:/data
+    environment:
+      NODE_ENV: production
+      PORT: 8787
+      DATABASE_PATH: /data/reloop.db
+      # --- Required: change these for your deployment ---
+      # Generate with: openssl rand -base64 32
+      SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD}
+      # Origins allowed to call the dashboard API (comma-separated).
+      # Same-origin by default since the server also serves the dashboard.
+      DASHBOARD_ORIGINS: ${DASHBOARD_ORIGINS:-http://localhost:8787}
+    restart: unless-stopped
+
+volumes:
+  reloop-data:

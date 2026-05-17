@@ -1,0 +1,33 @@
+{
+  "name": "@reloop/vanilla",
+  "version": "0.1.0",
+  "description": "Standalone script-tag embeddable feedback widget",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "unpkg": "./dist/reloop.global.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./embed": "./dist/reloop.global.js"
+  },
+  "files": ["dist"],
+  "sideEffects": true,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist .turbo"
+  },
+  "dependencies": {
+    "@reloop/core": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2"
+  }
+}
