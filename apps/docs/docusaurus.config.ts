@@ -11,8 +11,13 @@ const config: Config = {
     v4: true,
   },
 
-  url: "https://docs.reloop.example.com",
-  baseUrl: "/",
+  url: "https://martystephan.github.io",
+  baseUrl: "/Reloop/",
+
+  // GitHub Pages deployment config.
+  organizationName: "martystephan",
+  projectName: "Reloop",
+  trailingSlash: false,
 
   onBrokenLinks: "throw",
   markdown: {
