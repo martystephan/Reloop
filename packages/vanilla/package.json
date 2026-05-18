@@ -1,6 +1,6 @@
 {
   "name": "@reloop/vanilla",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Standalone script-tag embeddable feedback widget",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -15,7 +15,9 @@
     },
     "./embed": "./dist/reloop.global.js"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "sideEffects": true,
   "scripts": {
     "build": "tsup",
