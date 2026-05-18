@@ -1,5 +1,5 @@
 import { defineComponent, h, ref } from "vue";
-import type { FeedbackType } from "@reloop/core";
+import type { FeedbackType } from "@reloop-sdk/core";
 import { useFeedback } from "./useFeedback.js";
 
 const TYPES: { value: FeedbackType; label: string }[] = [

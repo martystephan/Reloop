@@ -3,18 +3,18 @@ sidebar_position: 1
 title: Core
 ---
 
-# @reloop/core
+# @reloop-sdk/core
 
 The framework-agnostic client. React, Vue and the vanilla widget all wrap it.
 
 ```bash
-npm install @reloop/core
+npm install @reloop-sdk/core
 ```
 
 ## createClient(options)
 
 ```ts
-import { createClient } from "@reloop/core";
+import { createClient } from "@reloop-sdk/core";
 
 const reloop = createClient({
   apiKey: "rl_pub_...",

@@ -14,16 +14,16 @@ Only a hash is stored server-side.
 ## 2. Install an SDK package
 
 ```bash
-npm install @reloop/core
+npm install @reloop-sdk/core
 # optional framework bindings
-npm install @reloop/react
-npm install @reloop/vue
+npm install @reloop-sdk/react
+npm install @reloop-sdk/vue
 ```
 
 ## 3. Send feedback
 
 ```ts
-import { createClient } from "@reloop/core";
+import { createClient } from "@reloop-sdk/core";
 
 const reloop = createClient({
   apiKey: "rl_pub_...",

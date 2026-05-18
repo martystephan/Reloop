@@ -14,10 +14,10 @@ all back in a dashboard you run yourself.
 
 | Package           | What it is                                              |
 | ----------------- | ------------------------------------------------------- |
-| `@reloop/core`    | Framework-agnostic client (batching, retry, beacon)     |
-| `@reloop/react`   | `ReloopProvider`, `useFeedback()`, `<FeedbackWidget />`  |
-| `@reloop/vue`     | `ReloopPlugin`, `useFeedback()`, `FeedbackWidget`        |
-| `@reloop/vanilla` | Script-tag embeddable widget with auto-init             |
+| `@reloop-sdk/core`    | Framework-agnostic client (batching, retry, beacon)     |
+| `@reloop-sdk/react`   | `ReloopProvider`, `useFeedback()`, `<FeedbackWidget />`  |
+| `@reloop-sdk/vue`     | `ReloopPlugin`, `useFeedback()`, `FeedbackWidget`        |
+| `@reloop-sdk/vanilla` | Script-tag embeddable widget with auto-init             |
 
 ## How it fits together
 

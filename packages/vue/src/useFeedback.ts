@@ -1,5 +1,5 @@
 import { ref } from "vue";
-import type { Feedback } from "@reloop/core";
+import type { Feedback } from "@reloop-sdk/core";
 import { useReloop } from "./plugin.js";
 
 type Status = "idle" | "submitting" | "success" | "error";

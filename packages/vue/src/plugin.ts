@@ -1,6 +1,6 @@
 import type { App, InjectionKey } from "vue";
 import { inject } from "vue";
-import { createClient, type ReloopClient, type ReloopOptions } from "@reloop/core";
+import { createClient, type ReloopClient, type ReloopOptions } from "@reloop-sdk/core";
 
 export const ReloopKey: InjectionKey<ReloopClient> = Symbol("reloop");
 

@@ -4,7 +4,7 @@ import {
   FeedbackWidget,
   useFeedback,
   type FeedbackType,
-} from "@reloop/react";
+} from "@reloop-sdk/react";
 
 const apiKey = import.meta.env.VITE_RELOOP_KEY ?? "";
 // Empty endpoint -> same origin, so the Vite proxy forwards /api to :8787.

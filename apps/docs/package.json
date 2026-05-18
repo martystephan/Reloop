@@ -1,5 +1,5 @@
 {
-  "name": "@reloop/docs",
+  "name": "@reloop-sdk/docs",
   "version": "0.1.0",
   "private": true,
   "scripts": {

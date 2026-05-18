@@ -7,4 +7,4 @@ export type {
   FeedbackUser,
   ReloopClient,
   ReloopOptions,
-} from "@reloop/core";
+} from "@reloop-sdk/core";

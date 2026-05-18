@@ -1,4 +1,4 @@
-import { createClient, type FeedbackType, type ReloopClient } from "@reloop/core";
+import { createClient, type FeedbackType, type ReloopClient } from "@reloop-sdk/core";
 
 export interface WidgetConfig {
   apiKey: string;

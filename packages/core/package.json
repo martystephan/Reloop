@@ -1,5 +1,5 @@
 {
-  "name": "@reloop/core",
+  "name": "@reloop-sdk/core",
   "version": "0.1.2",
   "description": "Framework-agnostic core for the Reloop feedback SDK",
   "type": "module",

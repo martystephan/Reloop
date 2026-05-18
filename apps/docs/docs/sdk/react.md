@@ -3,10 +3,10 @@ sidebar_position: 2
 title: React
 ---
 
-# @reloop/react
+# @reloop-sdk/react
 
 ```bash
-npm install @reloop/core @reloop/react
+npm install @reloop-sdk/core @reloop-sdk/react
 ```
 
 ## Provider
@@ -14,7 +14,7 @@ npm install @reloop/core @reloop/react
 Wrap your app once. Pass client options, or a pre-built `client`.
 
 ```tsx
-import { ReloopProvider, FeedbackWidget } from "@reloop/react";
+import { ReloopProvider, FeedbackWidget } from "@reloop-sdk/react";
 
 function App() {
   return (
@@ -31,7 +31,7 @@ function App() {
 Build your own UI; the hook handles status and errors.
 
 ```tsx
-import { useFeedback } from "@reloop/react";
+import { useFeedback } from "@reloop-sdk/react";
 
 function FeedbackButton() {
   const { submit, status, error } = useFeedback();
@@ -50,7 +50,7 @@ function FeedbackButton() {
 
 ## useReloop()
 
-Returns the underlying [`@reloop/core`](./core.md) client directly — useful
+Returns the underlying [`@reloop-sdk/core`](./core.md) client directly — useful
 for `identify()` after login:
 
 ```tsx

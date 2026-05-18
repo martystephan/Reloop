@@ -3,7 +3,7 @@ sidebar_position: 4
 title: Plain HTML
 ---
 
-# @reloop/vanilla
+# @reloop-sdk/vanilla
 
 A single `<script>` tag, no build step. The widget auto-initialises from
 `data-*` attributes on the script element.
@@ -38,5 +38,5 @@ The bundle also exposes a global for manual mounting:
 </script>
 ```
 
-When installed from npm (`@reloop/vanilla`) you can also
-`import { mountWidget } from "@reloop/vanilla"`.
+When installed from npm (`@reloop-sdk/vanilla`) you can also
+`import { mountWidget } from "@reloop-sdk/vanilla"`.

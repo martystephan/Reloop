@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import type { ReloopClient } from "@reloop/core";
+import type { ReloopClient } from "@reloop-sdk/core";
 
 export const ReloopContext = createContext<ReloopClient | null>(null);
 

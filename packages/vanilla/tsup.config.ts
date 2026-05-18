@@ -14,6 +14,6 @@ export default defineConfig([
     globalName: "Reloop",
     minify: true,
     sourcemap: true,
-    noExternal: ["@reloop/core"],
+    noExternal: ["@reloop-sdk/core"],
   },
 ]);

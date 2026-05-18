@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { FeedbackType } from "@reloop/core";
+import type { FeedbackType } from "@reloop-sdk/core";
 import { useFeedback } from "./useFeedback.js";
 
 export interface FeedbackWidgetProps {

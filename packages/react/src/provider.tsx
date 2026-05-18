@@ -1,5 +1,5 @@
 import { useMemo, type ReactNode } from "react";
-import { createClient, type ReloopClient, type ReloopOptions } from "@reloop/core";
+import { createClient, type ReloopClient, type ReloopOptions } from "@reloop-sdk/core";
 import { ReloopContext } from "./context.js";
 
 export interface ReloopProviderProps extends Partial<ReloopOptions> {

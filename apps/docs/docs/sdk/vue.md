@@ -3,17 +3,17 @@ sidebar_position: 3
 title: Vue
 ---
 
-# @reloop/vue
+# @reloop-sdk/vue
 
 ```bash
-npm install @reloop/core @reloop/vue
+npm install @reloop-sdk/core @reloop-sdk/vue
 ```
 
 ## Plugin
 
 ```ts
 import { createApp } from "vue";
-import { ReloopPlugin, FeedbackWidget } from "@reloop/vue";
+import { ReloopPlugin, FeedbackWidget } from "@reloop-sdk/vue";
 import App from "./App.vue";
 
 const app = createApp(App);
@@ -31,7 +31,7 @@ You can also pass a pre-built `client` instead of options.
 
 ```vue
 <script setup lang="ts">
-import { useFeedback } from "@reloop/vue";
+import { useFeedback } from "@reloop-sdk/vue";
 
 const { submit, status, error } = useFeedback();
 </script>
@@ -46,11 +46,11 @@ const { submit, status, error } = useFeedback();
 
 ## useReloop()
 
-Returns the underlying [`@reloop/core`](./core.md) client, e.g. for
+Returns the underlying [`@reloop-sdk/core`](./core.md) client, e.g. for
 `identify()`:
 
 ```ts
-import { useReloop } from "@reloop/vue";
+import { useReloop } from "@reloop-sdk/vue";
 
 const reloop = useReloop();
 reloop.identify({ id: user.id, email: user.email });

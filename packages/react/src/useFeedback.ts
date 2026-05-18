@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import type { Feedback } from "@reloop/core";
+import type { Feedback } from "@reloop-sdk/core";
 import { useReloop } from "./context.js";
 
 type Status = "idle" | "submitting" | "success" | "error";
