@@ -57,7 +57,10 @@ function CustomForm() {
         </button>{" "}
         {status === "success" && (
           <span style={{ color: "green" }}>
-            Sent ✓ <button type="button" onClick={reset}>reset</button>
+            Sent ✓{" "}
+            <button type="button" onClick={reset}>
+              reset
+            </button>
           </span>
         )}
         {status === "error" && (
@@ -83,7 +86,11 @@ export function App() {
   }
 
   return (
-    <ReloopProvider apiKey={apiKey} endpoint={endpoint} user={{ id: "demo-user" }}>
+    <ReloopProvider
+      apiKey={apiKey}
+      endpoint={endpoint}
+      user={{ id: "demo-user" }}
+    >
       <div style={{ padding: 32 }}>
         <h1>Reloop React Demo</h1>
         <p>

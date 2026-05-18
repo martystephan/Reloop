@@ -46,6 +46,11 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ name }),
     }).then((r) => r.project),
+  updateProject: (id: string, name: string) =>
+    request<{ project: Project }>(`/projects/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ name }),
+    }).then((r) => r.project),
   deleteProject: (id: string) =>
     request<void>(`/projects/${id}`, { method: "DELETE" }),
 

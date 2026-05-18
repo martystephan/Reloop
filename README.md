@@ -23,6 +23,7 @@ cp apps/server/.env.example apps/server/.env   # then set SESSION_SECRET + ADMIN
 pnpm --filter @reloop/server dev # http://localhost:8787
 pnpm --filter @reloop/dashboard dev  # http://localhost:5173 (proxies /api)
 pnpm --filter @reloop/docs dev   # http://localhost:3000 (SDK documentation)
+pnpm --filter @reloop/example-react-demo dev
 ```
 
 The dashboard links to the docs site via `VITE_DOCS_URL` (defaults to

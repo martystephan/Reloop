@@ -52,6 +52,25 @@ projectsRouter.post("/", (req: AuthedRequest, res) => {
   res.status(201).json({ project: { id, name: parsed.data.name } });
 });
 
+const updateSchema = z.object({ name: z.string().min(1).max(80) });
+
+projectsRouter.patch("/:id", (req: AuthedRequest, res) => {
+  try {
+    assertOwnedProject(req.params.id, req.userId!);
+  } catch {
+    return res.status(404).json({ error: "not_found" });
+  }
+  const parsed = updateSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "invalid_body", issues: parsed.error.issues });
+  }
+  db.prepare("UPDATE projects SET name = ? WHERE id = ?").run(
+    parsed.data.name,
+    req.params.id,
+  );
+  res.json({ project: { id: req.params.id, name: parsed.data.name } });
+});
+
 projectsRouter.delete("/:id", (req: AuthedRequest, res) => {
   try {
     assertOwnedProject(req.params.id, req.userId!);
