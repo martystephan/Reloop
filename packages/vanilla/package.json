@@ -31,5 +31,10 @@
   "devDependencies": {
     "tsup": "^8.3.5",
     "typescript": "^5.7.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/martystephan/Reloop.git",
+    "directory": "packages/vanilla"
   }
 }
