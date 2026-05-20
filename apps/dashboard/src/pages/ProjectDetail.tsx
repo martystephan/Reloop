@@ -96,7 +96,7 @@ function FeedbackTab({ projectId }: { projectId: string }) {
   return (
     <>
       <Select value={filter} onValueChange={setFilter}>
-        <SelectTrigger className="mb-4 w-48">
+        <SelectTrigger className="mb-4 w-full sm:w-48">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -108,15 +108,16 @@ function FeedbackTab({ projectId }: { projectId: string }) {
         </SelectContent>
       </Select>
 
-      <Card>
+      <Card className="overflow-hidden">
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="w-24">Type</TableHead>
               <TableHead>Message</TableHead>
-              <TableHead className="w-40">Source key</TableHead>
-              <TableHead className="w-20">Rating</TableHead>
-              <TableHead className="w-44">Date</TableHead>
+              <TableHead className="hidden md:table-cell w-40">Source key</TableHead>
+              <TableHead className="hidden md:table-cell w-20">Rating</TableHead>
+              <TableHead className="hidden sm:table-cell w-44">Date</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -144,13 +145,13 @@ function FeedbackTab({ projectId }: { projectId: string }) {
                     )}
                   </div>
                 </TableCell>
-                <TableCell className="text-muted-foreground">
+                <TableCell className="hidden md:table-cell truncate max-w-[10rem] text-muted-foreground">
                   {f.api_key_name ?? "—"}
                 </TableCell>
-                <TableCell className="text-muted-foreground">
+                <TableCell className="hidden md:table-cell text-muted-foreground">
                   {f.rating != null ? `${f.rating}/5` : "—"}
                 </TableCell>
-                <TableCell className="whitespace-nowrap text-muted-foreground">
+                <TableCell className="hidden sm:table-cell whitespace-nowrap text-muted-foreground">
                   {new Date(f.created_at).toLocaleString()}
                 </TableCell>
               </TableRow>
@@ -167,6 +168,7 @@ function FeedbackTab({ projectId }: { projectId: string }) {
             )}
           </TableBody>
         </Table>
+        </div>
       </Card>
 
       {selected && (
@@ -249,9 +251,9 @@ function FeedbackModal({
             </p>
           </div>
 
-          <dl className="grid grid-cols-[7rem_1fr] gap-x-4 gap-y-2 text-sm">
+          <dl className="grid grid-cols-1 gap-y-2 text-sm sm:grid-cols-[7rem_1fr] sm:gap-x-4">
             {rows.map((r) => (
-              <div key={r.label} className="contents">
+              <div key={r.label} className="sm:contents">
                 <dt className="text-muted-foreground">{r.label}</dt>
                 <dd className="break-words">{r.value}</dd>
               </div>
@@ -348,26 +350,27 @@ function KeysTab({ projectId }: { projectId: string }) {
         </Dialog>
       </div>
 
-      <Card>
+      <Card className="overflow-hidden">
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Key</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead className="hidden sm:table-cell">Status</TableHead>
               <TableHead className="w-12" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {keys.map((k) => (
               <TableRow key={k.id}>
-                <TableCell className="font-medium">{k.name}</TableCell>
+                <TableCell className="font-medium max-w-[8rem] truncate">{k.name}</TableCell>
                 <TableCell>
                   <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
                     {k.prefix}
                   </code>
                 </TableCell>
-                <TableCell className="text-muted-foreground">
+                <TableCell className="hidden sm:table-cell whitespace-nowrap text-muted-foreground">
                   {k.revoked_at
                     ? "Revoked"
                     : k.last_used_at
@@ -412,6 +415,7 @@ function KeysTab({ projectId }: { projectId: string }) {
             )}
           </TableBody>
         </Table>
+        </div>
       </Card>
 
       {secret && (
