@@ -84,7 +84,7 @@ export function Projects() {
 
   return (
     <div className="mx-auto max-w-5xl px-5 py-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-xl font-semibold tracking-tight">Projects</h1>
         <div className="flex items-center gap-2">
           <Dialog open={open} onOpenChange={setOpen}>
@@ -133,14 +133,15 @@ export function Projects() {
 
       {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
 
-      <Card className="mt-6">
+      <Card className="mt-6 overflow-hidden">
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>Project ID</TableHead>
+              <TableHead className="hidden sm:table-cell">Project ID</TableHead>
               <TableHead className="text-right">Feedback</TableHead>
-              <TableHead className="text-right">Created</TableHead>
+              <TableHead className="hidden sm:table-cell text-right">Created</TableHead>
               <TableHead className="w-0" />
             </TableRow>
           </TableHeader>
@@ -151,14 +152,14 @@ export function Projects() {
                 className="cursor-pointer"
                 onClick={() => navigate(`/projects/${p.id}`)}
               >
-                <TableCell className="font-semibold">{p.name}</TableCell>
-                <TableCell className="font-mono text-xs text-muted-foreground">
+                <TableCell className="font-semibold max-w-[8rem] sm:max-w-none truncate">{p.name}</TableCell>
+                <TableCell className="hidden sm:table-cell font-mono text-xs text-muted-foreground max-w-[12rem] truncate">
                   {p.id}
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
                   {p.feedback_count}
                 </TableCell>
-                <TableCell className="text-right text-muted-foreground">
+                <TableCell className="hidden sm:table-cell text-right text-muted-foreground whitespace-nowrap">
                   {new Date(p.created_at).toLocaleString()}
                 </TableCell>
                 <TableCell
@@ -208,6 +209,7 @@ export function Projects() {
             )}
           </TableBody>
         </Table>
+        </div>
       </Card>
 
       <Dialog
