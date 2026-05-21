@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
-import { api, type NotificationService, type NotificationServiceInput, type Project } from "../api.js";
+import {
+  api,
+  type NotificationService,
+  type NotificationServiceInput,
+  type Project,
+} from "../api.js";
 import { logout } from "../auth-client.js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,10 +67,15 @@ function ServiceForm({
   error: string | null;
 }) {
   const [form, setForm] = useState(initial);
-  const [testStatus, setTestStatus] = useState<"idle" | "sending" | "ok" | "fail">("idle");
+  const [testStatus, setTestStatus] = useState<
+    "idle" | "sending" | "ok" | "fail"
+  >("idle");
   const [testError, setTestError] = useState<string | null>(null);
 
-  function set(field: keyof NotificationServiceInput, value: string | number | boolean) {
+  function set(
+    field: keyof NotificationServiceInput,
+    value: string | number | boolean,
+  ) {
     setForm((f) => ({ ...f, [field]: value }));
     setTestStatus("idle");
   }
@@ -75,7 +85,10 @@ function ServiceForm({
     setTestStatus("sending");
     setTestError(null);
     try {
-      const result = await api.testNotificationService({ ...form, id: serviceId });
+      const result = await api.testNotificationService({
+        ...form,
+        id: serviceId,
+      });
       if (result.ok) {
         setTestStatus("ok");
       } else {
@@ -126,7 +139,11 @@ function ServiceForm({
             value={form.smtp_port}
             onChange={(e) => {
               const port = Number(e.target.value);
-              setForm((f) => ({ ...f, smtp_port: port, smtp_secure: port === 465 }));
+              setForm((f) => ({
+                ...f,
+                smtp_port: port,
+                smtp_secure: port === 465,
+              }));
               setTestStatus("idle");
             }}
             required
@@ -186,7 +203,8 @@ function ServiceForm({
               Implicit TLS / SMTPS
             </Label>
             <p className="text-xs text-muted-foreground">
-              Enable for port 465. Port 587 uses STARTTLS automatically — leave this unchecked.
+              Enable for port 465. Port 587 uses STARTTLS automatically — leave
+              this unchecked.
             </p>
           </div>
         </div>
@@ -194,8 +212,12 @@ function ServiceForm({
       {error && <p className="text-sm text-destructive break-words">{error}</p>}
       <div className="flex flex-col gap-2 pt-1">
         {(testStatus === "ok" || testStatus === "fail") && (
-          <p className={`text-sm break-words ${testStatus === "ok" ? "text-green-600 dark:text-green-400" : "text-destructive"}`}>
-            {testStatus === "ok" ? "Test email sent!" : `Failed: ${testError ?? "Unknown error"}`}
+          <p
+            className={`text-sm break-words ${testStatus === "ok" ? "text-green-600 dark:text-green-400" : "text-destructive"}`}
+          >
+            {testStatus === "ok"
+              ? "Test email sent!"
+              : `Failed: ${testError ?? "Unknown error"}`}
           </p>
         )}
         <div className="flex flex-wrap gap-2 justify-between">
@@ -302,11 +324,9 @@ function NotificationServicesDialog() {
             </DialogDescription>
           </DialogHeader>
 
-          {listError && (
-            <p className="text-sm text-destructive">{listError}</p>
-          )}
+          {listError && <p className="text-sm text-destructive">{listError}</p>}
 
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 min-w-0">
             {services.map((svc) =>
               editingId === svc.id ? (
                 <div key={svc.id} className="rounded-md border p-3 sm:p-4">
@@ -336,7 +356,7 @@ function NotificationServicesDialog() {
                   key={svc.id}
                   className="flex items-center justify-between rounded-md border px-4 py-3"
                 >
-                  <div className="min-w-0">
+                  <div className="flex-1 min-w-0 overflow-hidden">
                     <p className="font-medium truncate">{svc.name}</p>
                     <p className="text-xs text-muted-foreground truncate">
                       {svc.smtp_host}:{svc.smtp_port}
@@ -489,7 +509,9 @@ function ProjectNotificationsDialog({
   return (
     <DialogContent>
       <DialogHeader>
-        <DialogTitle className="truncate">Notifications — {project.name}</DialogTitle>
+        <DialogTitle className="truncate">
+          Notifications — {project.name}
+        </DialogTitle>
         <DialogDescription>
           Select which notification services should be triggered when feedback
           arrives for this project.
@@ -535,7 +557,10 @@ function ProjectNotificationsDialog({
         <Button variant="outline" onClick={onClose}>
           Cancel
         </Button>
-        <Button onClick={save} disabled={saving || loading || allServices.length === 0}>
+        <Button
+          onClick={save}
+          disabled={saving || loading || allServices.length === 0}
+        >
           {saving ? "Saving…" : "Save"}
         </Button>
       </DialogFooter>
@@ -656,9 +681,13 @@ export function Projects() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead className="hidden sm:table-cell">Project ID</TableHead>
+                <TableHead className="hidden sm:table-cell">
+                  Project ID
+                </TableHead>
                 <TableHead className="text-right">Feedback</TableHead>
-                <TableHead className="hidden sm:table-cell text-right">Created</TableHead>
+                <TableHead className="hidden sm:table-cell text-right">
+                  Created
+                </TableHead>
                 <TableHead className="w-0" />
               </TableRow>
             </TableHeader>
@@ -808,11 +837,7 @@ export function Projects() {
             >
               Cancel
             </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={confirmDelete}
-            >
+            <Button type="button" variant="destructive" onClick={confirmDelete}>
               Delete project
             </Button>
           </DialogFooter>
