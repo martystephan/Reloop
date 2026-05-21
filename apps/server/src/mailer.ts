@@ -78,3 +78,21 @@ export function sendViaService(
       );
     });
 }
+
+/** Sends a test email and resolves on success, rejects with an Error on failure. */
+export async function testConnection(service: NotificationServiceRow): Promise<void> {
+  const transport = nodemailer.createTransport({
+    host: service.smtp_host,
+    port: service.smtp_port,
+    secure: service.smtp_secure === 1,
+    auth: { user: service.smtp_user, pass: service.smtp_pass },
+  });
+
+  await transport.verify();
+  await transport.sendMail({
+    from: service.from_address,
+    to: service.to_address,
+    subject: "[Reloop] Test connection",
+    text: "This is a test email from Reloop to verify your notification service is working correctly.",
+  });
+}

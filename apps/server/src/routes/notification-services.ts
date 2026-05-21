@@ -4,7 +4,7 @@ import { db } from "../db.js";
 import { newId } from "../keys.js";
 import { requireUser, type AuthedRequest } from "../middleware.js";
 import { assertOwnedProject } from "./projects.js";
-import type { NotificationServiceRow } from "../mailer.js";
+import { testConnection, type NotificationServiceRow } from "../mailer.js";
 
 export const notificationServicesRouter = Router();
 notificationServicesRouter.use(requireUser);
@@ -114,6 +114,53 @@ notificationServicesRouter.delete("/notification-services/:id", (req, res) => {
   db.prepare("DELETE FROM notification_services WHERE id = ?").run(req.params.id);
   res.status(204).end();
 });
+
+const testSchema = serviceSchema.extend({
+  id: z.string().optional(),
+});
+
+notificationServicesRouter.post(
+  "/notification-services/test",
+  async (req, res) => {
+    const parsed = testSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "invalid_body", issues: parsed.error.issues });
+    }
+
+    const { smtp_secure, id, ...rest } = parsed.data;
+
+    // Resolve masked password from DB when editing an existing service.
+    let resolvedPass = rest.smtp_pass;
+    if (resolvedPass === MASKED && id) {
+      const row = db
+        .prepare("SELECT smtp_pass FROM notification_services WHERE id = ?")
+        .get(id) as { smtp_pass: string } | undefined;
+      if (!row) return res.status(400).json({ error: "service_not_found" });
+      resolvedPass = row.smtp_pass;
+    }
+
+    const serviceRow: NotificationServiceRow = {
+      id: id ?? "",
+      name: rest.name,
+      type: "email",
+      smtp_host: rest.smtp_host,
+      smtp_port: rest.smtp_port,
+      smtp_secure: smtp_secure ? 1 : 0,
+      smtp_user: rest.smtp_user,
+      smtp_pass: resolvedPass,
+      from_address: rest.from_address,
+      to_address: rest.to_address,
+      created_at: 0,
+    };
+
+    try {
+      await testConnection(serviceRow);
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(200).json({ ok: false, error: (err as Error).message });
+    }
+  },
+);
 
 // ── Per-project service links ──────────────────────────────────────────────
 

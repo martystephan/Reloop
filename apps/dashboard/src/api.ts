@@ -110,6 +110,11 @@ export const api = {
     }).then((r) => r.service),
   deleteNotificationService: (id: string) =>
     request<void>(`/notification-services/${id}`, { method: "DELETE" }),
+  testNotificationService: (data: NotificationServiceInput & { id?: string }) =>
+    request<{ ok: boolean; error?: string }>("/notification-services/test", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 
   getProjectNotificationServices: (projectId: string) =>
     request<{ services: NotificationService[] }>(

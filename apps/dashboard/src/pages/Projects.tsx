@@ -48,21 +48,44 @@ const EMPTY_FORM: NotificationServiceInput = {
 
 function ServiceForm({
   initial,
+  serviceId,
   onSave,
   onCancel,
   saving,
   error,
 }: {
   initial: NotificationServiceInput;
+  serviceId?: string;
   onSave: (data: NotificationServiceInput) => Promise<void>;
   onCancel: () => void;
   saving: boolean;
   error: string | null;
 }) {
   const [form, setForm] = useState(initial);
+  const [testStatus, setTestStatus] = useState<"idle" | "sending" | "ok" | "fail">("idle");
+  const [testError, setTestError] = useState<string | null>(null);
 
   function set(field: keyof NotificationServiceInput, value: string | number | boolean) {
     setForm((f) => ({ ...f, [field]: value }));
+    setTestStatus("idle");
+  }
+
+  async function handleTest(e: React.MouseEvent) {
+    e.preventDefault();
+    setTestStatus("sending");
+    setTestError(null);
+    try {
+      const result = await api.testNotificationService({ ...form, id: serviceId });
+      if (result.ok) {
+        setTestStatus("ok");
+      } else {
+        setTestStatus("fail");
+        setTestError(result.error ?? "Unknown error");
+      }
+    } catch (err) {
+      setTestStatus("fail");
+      setTestError((err as Error).message);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -160,13 +183,35 @@ function ServiceForm({
         </div>
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
-      <div className="flex justify-end gap-2 pt-1">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button type="submit" disabled={saving || !form.name.trim()}>
-          {saving ? "Saving…" : "Save service"}
-        </Button>
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={testStatus === "sending" || !form.smtp_host.trim()}
+            onClick={handleTest}
+          >
+            {testStatus === "sending" ? "Sending…" : "Test connection"}
+          </Button>
+          {testStatus === "ok" && (
+            <span className="text-sm text-green-600 dark:text-green-400">
+              Test email sent!
+            </span>
+          )}
+          {testStatus === "fail" && (
+            <span className="text-sm text-destructive" title={testError ?? undefined}>
+              {testError ? `Failed: ${testError}` : "Test failed"}
+            </span>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={saving || !form.name.trim()}>
+            {saving ? "Saving…" : "Save service"}
+          </Button>
+        </div>
       </div>
     </form>
   );
@@ -272,6 +317,7 @@ function NotificationServicesDialog() {
                       from_address: svc.from_address,
                       to_address: svc.to_address,
                     }}
+                    serviceId={svc.id}
                     onSave={(data) => handleUpdate(svc.id, data)}
                     onCancel={() => {
                       setEditingId(null);
