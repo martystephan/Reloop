@@ -16,6 +16,32 @@ export interface Project {
   name: string;
   created_at: number;
   feedback_count: number;
+  notification_service_count: number;
+}
+
+export interface NotificationService {
+  id: string;
+  name: string;
+  type: string;
+  smtp_host: string;
+  smtp_port: number;
+  smtp_secure: number;
+  smtp_user: string;
+  smtp_pass: string;
+  from_address: string;
+  to_address: string;
+  created_at: number;
+}
+
+export interface NotificationServiceInput {
+  name: string;
+  smtp_host: string;
+  smtp_port: number;
+  smtp_secure: boolean;
+  smtp_user: string;
+  smtp_pass: string;
+  from_address: string;
+  to_address: string;
 }
 
 export interface ApiKey {
@@ -67,4 +93,36 @@ export const api = {
     request<{ items: FeedbackItem[]; total: number }>(
       `/projects/${projectId}/feedback${type ? `?type=${type}` : ""}`,
     ),
+
+  listNotificationServices: () =>
+    request<{ services: NotificationService[] }>("/notification-services").then(
+      (r) => r.services,
+    ),
+  createNotificationService: (data: NotificationServiceInput) =>
+    request<{ service: NotificationService }>("/notification-services", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }).then((r) => r.service),
+  updateNotificationService: (id: string, data: Partial<NotificationServiceInput>) =>
+    request<{ service: NotificationService }>(`/notification-services/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }).then((r) => r.service),
+  deleteNotificationService: (id: string) =>
+    request<void>(`/notification-services/${id}`, { method: "DELETE" }),
+  testNotificationService: (data: NotificationServiceInput & { id?: string }) =>
+    request<{ ok: boolean; error?: string }>("/notification-services/test", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  getProjectNotificationServices: (projectId: string) =>
+    request<{ services: NotificationService[] }>(
+      `/projects/${projectId}/notification-services`,
+    ).then((r) => r.services),
+  setProjectNotificationServices: (projectId: string, serviceIds: string[]) =>
+    request<void>(`/projects/${projectId}/notification-services`, {
+      method: "PUT",
+      body: JSON.stringify({ serviceIds }),
+    }),
 };

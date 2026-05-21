@@ -51,4 +51,26 @@ export function migrate(): void {
   if (!hasApiKeyId) {
     db.exec("ALTER TABLE feedback ADD COLUMN api_key_id TEXT");
   }
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS notification_services (
+      id           TEXT PRIMARY KEY,
+      name         TEXT NOT NULL,
+      type         TEXT NOT NULL DEFAULT 'email',
+      smtp_host    TEXT NOT NULL,
+      smtp_port    INTEGER NOT NULL,
+      smtp_secure  INTEGER NOT NULL DEFAULT 0,
+      smtp_user    TEXT NOT NULL,
+      smtp_pass    TEXT NOT NULL,
+      from_address TEXT NOT NULL,
+      to_address   TEXT NOT NULL,
+      created_at   INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS project_notification_services (
+      project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      service_id TEXT NOT NULL REFERENCES notification_services(id) ON DELETE CASCADE,
+      PRIMARY KEY (project_id, service_id)
+    );
+  `);
 }
