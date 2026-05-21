@@ -124,7 +124,11 @@ function ServiceForm({
             min={1}
             max={65535}
             value={form.smtp_port}
-            onChange={(e) => set("smtp_port", Number(e.target.value))}
+            onChange={(e) => {
+              const port = Number(e.target.value);
+              setForm((f) => ({ ...f, smtp_port: port, smtp_secure: port === 465 }));
+              setTestStatus("idle");
+            }}
             required
           />
         </div>
@@ -177,9 +181,14 @@ function ServiceForm({
             checked={form.smtp_secure}
             onChange={(e) => set("smtp_secure", e.target.checked)}
           />
-          <Label htmlFor="svc-secure" className="font-normal cursor-pointer">
-            Use TLS (port 465)
-          </Label>
+          <div>
+            <Label htmlFor="svc-secure" className="font-normal cursor-pointer">
+              Implicit TLS / SMTPS
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Enable for port 465. Port 587 uses STARTTLS automatically — leave this unchecked.
+            </p>
+          </div>
         </div>
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
