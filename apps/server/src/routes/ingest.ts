@@ -3,6 +3,7 @@ import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import { db } from "../db.js";
 import { hashApiKey, newId } from "../keys.js";
+import { sendViaService, type NotificationServiceRow } from "../mailer.js";
 
 export const ingestRouter = Router();
 
@@ -86,6 +87,25 @@ ingestRouter.post("/", limiter, (req, res) => {
     );
   });
   tx(parsed.data.items);
+
+  // Fire email notifications asynchronously — never block the response.
+  const linkedServices = db
+    .prepare(
+      `SELECT ns.* FROM notification_services ns
+       JOIN project_notification_services pns ON pns.service_id = ns.id
+       WHERE pns.project_id = ?`,
+    )
+    .all(keyRow.project_id) as NotificationServiceRow[];
+
+  if (linkedServices.length > 0) {
+    const project = db
+      .prepare("SELECT name FROM projects WHERE id = ?")
+      .get(keyRow.project_id) as { name: string } | undefined;
+    const projectName = project?.name ?? keyRow.project_id;
+    for (const svc of linkedServices) {
+      sendViaService(svc, projectName, parsed.data.items, parsed.data.user ?? null);
+    }
+  }
 
   res.status(202).json({ accepted: parsed.data.items.length });
 });

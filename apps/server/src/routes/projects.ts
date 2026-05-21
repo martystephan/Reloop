@@ -29,7 +29,8 @@ projectsRouter.get("/", (req: AuthedRequest, res) => {
   const rows = db
     .prepare(
       `SELECT p.id, p.name, p.created_at,
-              (SELECT COUNT(*) FROM feedback f WHERE f.project_id = p.id) AS feedback_count
+              (SELECT COUNT(*) FROM feedback f WHERE f.project_id = p.id) AS feedback_count,
+              (SELECT COUNT(*) FROM project_notification_services pns WHERE pns.project_id = p.id) AS notification_service_count
        FROM projects p
        WHERE p.owner_user_id = ?
        ORDER BY p.created_at DESC`,

@@ -10,6 +10,7 @@ import { ingestRouter } from "./routes/ingest.js";
 import { projectsRouter } from "./routes/projects.js";
 import { keysRouter } from "./routes/keys.js";
 import { feedbackRouter } from "./routes/feedback.js";
+import { notificationServicesRouter } from "./routes/notification-services.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -30,6 +31,7 @@ app.use("/api", authRouter);
 app.use("/api/projects", projectsRouter);
 app.use("/api", keysRouter);
 app.use("/api", feedbackRouter);
+app.use("/api", notificationServicesRouter);
 
 // In production, serve the built dashboard from the same origin.
 if (env.nodeEnv === "production") {
