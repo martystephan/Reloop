@@ -66,7 +66,7 @@ export function sendViaService(
 
   transport
     .sendMail({
-      from: service.from_address,
+      from: `Reloop <${service.from_address}>`,
       to: service.to_address,
       subject: `[Reloop] ${items.length === 1 ? "New feedback" : `${items.length} new feedback items`} — ${projectName}`,
       text,
@@ -90,7 +90,7 @@ export async function testConnection(service: NotificationServiceRow): Promise<v
 
   await transport.verify();
   await transport.sendMail({
-    from: service.from_address,
+    from: `Reloop <${service.from_address}>`,
     to: service.to_address,
     subject: "[Reloop] Test connection",
     text: "This is a test email from Reloop to verify your notification service is working correctly.",
