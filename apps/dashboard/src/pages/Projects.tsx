@@ -95,8 +95,8 @@ function ServiceForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <div className="grid grid-cols-2 gap-3">
-        <div className="col-span-2 flex flex-col gap-1.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="sm:col-span-2 flex flex-col gap-1.5">
           <Label htmlFor="svc-name">Service name</Label>
           <Input
             id="svc-name"
@@ -173,7 +173,7 @@ function ServiceForm({
             required
           />
         </div>
-        <div className="col-span-2 flex items-center gap-2">
+        <div className="sm:col-span-2 flex items-center gap-2">
           <input
             id="svc-secure"
             type="checkbox"
@@ -191,9 +191,14 @@ function ServiceForm({
           </div>
         </div>
       </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
-      <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-        <div className="flex items-center gap-2">
+      {error && <p className="text-sm text-destructive break-words">{error}</p>}
+      <div className="flex flex-col gap-2 pt-1">
+        {(testStatus === "ok" || testStatus === "fail") && (
+          <p className={`text-sm break-words ${testStatus === "ok" ? "text-green-600 dark:text-green-400" : "text-destructive"}`}>
+            {testStatus === "ok" ? "Test email sent!" : `Failed: ${testError ?? "Unknown error"}`}
+          </p>
+        )}
+        <div className="flex flex-wrap gap-2 justify-between">
           <Button
             type="button"
             variant="outline"
@@ -202,24 +207,14 @@ function ServiceForm({
           >
             {testStatus === "sending" ? "Sending…" : "Test connection"}
           </Button>
-          {testStatus === "ok" && (
-            <span className="text-sm text-green-600 dark:text-green-400">
-              Test email sent!
-            </span>
-          )}
-          {testStatus === "fail" && (
-            <span className="text-sm text-destructive" title={testError ?? undefined}>
-              {testError ? `Failed: ${testError}` : "Test failed"}
-            </span>
-          )}
-        </div>
-        <div className="flex gap-2">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={saving || !form.name.trim()}>
-            {saving ? "Saving…" : "Save service"}
-          </Button>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={saving || !form.name.trim()}>
+              {saving ? "Saving…" : "Save service"}
+            </Button>
+          </div>
         </div>
       </div>
     </form>
@@ -314,7 +309,7 @@ function NotificationServicesDialog() {
           <div className="flex flex-col gap-4">
             {services.map((svc) =>
               editingId === svc.id ? (
-                <div key={svc.id} className="rounded-md border p-4">
+                <div key={svc.id} className="rounded-md border p-3 sm:p-4">
                   <ServiceForm
                     initial={{
                       name: svc.name,
@@ -344,7 +339,10 @@ function NotificationServicesDialog() {
                   <div className="min-w-0">
                     <p className="font-medium truncate">{svc.name}</p>
                     <p className="text-xs text-muted-foreground truncate">
-                      {svc.smtp_host}:{svc.smtp_port} · {svc.from_address} → {svc.to_address}
+                      {svc.smtp_host}:{svc.smtp_port}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {svc.from_address} → {svc.to_address}
                     </p>
                   </div>
                   <div className="flex items-center gap-1 ml-2 shrink-0">
@@ -381,7 +379,7 @@ function NotificationServicesDialog() {
             )}
 
             {adding ? (
-              <div className="rounded-md border p-4">
+              <div className="rounded-md border p-3 sm:p-4">
                 <p className="text-sm font-medium mb-3">New service</p>
                 <ServiceForm
                   initial={EMPTY_FORM}
@@ -491,7 +489,7 @@ function ProjectNotificationsDialog({
   return (
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>Notifications — {project.name}</DialogTitle>
+        <DialogTitle className="truncate">Notifications — {project.name}</DialogTitle>
         <DialogDescription>
           Select which notification services should be triggered when feedback
           arrives for this project.
