@@ -31,10 +31,11 @@ const reloop = createClient({
   user: { id: "user_123", email: "marty@example.com" }, // optional
 });
 
-reloop.submit({ type: "bug", message: "The export button 404s" });
+await reloop.submit({ type: "bug", message: "The export button 404s" });
 ```
 
-That's it — submissions are queued, batched and retried automatically.
+That's it — each call sends a single HTTP request and resolves on success
+or rejects with a `ReloopError` on failure.
 
 Next: pick your integration — [Core](./sdk/core.md),
 [React](./sdk/react.md), [Vue](./sdk/vue.md) or

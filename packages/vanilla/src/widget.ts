@@ -36,7 +36,8 @@ export function mountWidget(config: WidgetConfig): ReloopClient {
         <div data-tabs style="display:flex;gap:6px;margin-bottom:10px"></div>
         <textarea name="message" rows="4" placeholder="Tell us what's on your mind…"
           style="width:100%;box-sizing:border-box;border-radius:8px;border:1px solid #e5e7eb;padding:8px;resize:vertical"></textarea>
-        <button type="submit" style="margin-top:10px;width:100%;padding:8px 0;border-radius:8px;border:none;background:#2563eb;color:#fff;cursor:pointer">Send</button>`;
+        <p data-error style="display:none;margin:8px 0 0;color:#dc2626;font-size:13px"></p>
+        <button type="submit" data-send style="margin-top:10px;width:100%;padding:8px 0;border-radius:8px;border:none;background:#2563eb;color:#fff;cursor:pointer">Send</button>`;
 
       const tabs = panel.querySelector("[data-tabs]") as HTMLElement;
       for (const t of TYPES) {
@@ -56,14 +57,27 @@ export function mountWidget(config: WidgetConfig): ReloopClient {
       panel.onsubmit = async (e) => {
         e.preventDefault();
         const ta = panel.querySelector("textarea") as HTMLTextAreaElement;
+        const errEl = panel.querySelector("[data-error]") as HTMLElement;
+        const sendBtn = panel.querySelector("[data-send]") as HTMLButtonElement;
         if (!ta.value.trim()) return;
-        await client.submit({ type, message: ta.value });
-        panel.innerHTML =
-          '<p>Thanks for the feedback! 🙌</p><button type="button" data-close>Close</button>';
-        (panel.querySelector("[data-close]") as HTMLButtonElement).onclick = () => {
-          open = false;
-          render();
-        };
+        errEl.style.display = "none";
+        sendBtn.disabled = true;
+        sendBtn.textContent = "Sending…";
+        try {
+          await client.submit({ type, message: ta.value });
+          panel.innerHTML =
+            '<p>Thanks for the feedback! 🙌</p><button type="button" data-close>Close</button>';
+          (panel.querySelector("[data-close]") as HTMLButtonElement).onclick = () => {
+            open = false;
+            render();
+          };
+        } catch (err) {
+          errEl.textContent =
+            (err as Error)?.message ?? "Something went wrong. Please try again.";
+          errEl.style.display = "block";
+          sendBtn.disabled = false;
+          sendBtn.textContent = "Send";
+        }
       };
       root.appendChild(panel);
     }

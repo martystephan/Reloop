@@ -3,7 +3,7 @@
 Self-hostable feedback SDK and dashboard.
 
 ```
-packages/core      @reloop-sdk/core     framework-agnostic client (transport, batching, retry)
+packages/core      @reloop-sdk/core     framework-agnostic client
 packages/react     @reloop-sdk/react    <ReloopProvider>, useFeedback(), <FeedbackWidget>
 packages/vue       @reloop-sdk/vue      ReloopPlugin, useReloop(), <FeedbackWidget>
 packages/vanilla   @reloop-sdk/vanilla  script-tag embeddable widget (auto-init)

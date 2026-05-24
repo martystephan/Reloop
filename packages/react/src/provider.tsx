@@ -11,7 +11,18 @@ export interface ReloopProviderProps extends Partial<ReloopOptions> {
 export function ReloopProvider({ client, children, ...options }: ReloopProviderProps) {
   const value = useMemo<ReloopClient>(() => {
     if (client) return client;
-    if (!options.apiKey || !options.endpoint) return createNoopClient();
+    if (!options.apiKey || !options.endpoint) {
+      const missing = [
+        !options.apiKey && "apiKey",
+        !options.endpoint && "endpoint",
+      ]
+        .filter(Boolean)
+        .join(" and ");
+      console.warn(
+        `[reloop] ${missing} missing — feedback will not be sent. Pass it to <ReloopProvider> via props or env vars.`,
+      );
+      return createNoopClient();
+    }
     return createClient(options as ReloopOptions);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client, options.apiKey, options.endpoint]);

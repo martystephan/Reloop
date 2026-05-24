@@ -25,21 +25,18 @@ const reloop = createClient({
 
 ### Options
 
-| Option          | Type          | Default | Description                                              |
-| --------------- | ------------- | ------- | -------------------------------------------------------- |
-| `apiKey`        | `string`      | —       | Publishable key from the dashboard (required).           |
-| `endpoint`      | `string`      | —       | **Base URL** of your server. SDK appends `/api/ingest`.  |
-| `user`          | `FeedbackUser`| —       | User to attach to feedback. Optional.                    |
-| `flushInterval` | `number`      | `3000`  | Auto-flush the queue after this many ms.                 |
-| `batchSize`     | `number`      | `10`    | Max items per network request.                           |
-| `maxRetries`    | `number`      | `3`     | Send retries per batch before dropping.                  |
+| Option     | Type          | Default | Description                                              |
+| ---------- | ------------- | ------- | -------------------------------------------------------- |
+| `apiKey`   | `string`      | —       | Publishable key from the dashboard (required).           |
+| `endpoint` | `string`      | —       | **Base URL** of your server. SDK appends `/api/ingest`.  |
+| `user`     | `FeedbackUser`| —       | User to attach to feedback. Optional.                    |
 
 ## Methods
 
 ### submit(feedback)
 
 ```ts
-reloop.submit({
+await reloop.submit({
   type: "bug", // "bug" | "idea" | "praise" | "rating"
   message: "Button funktioniert nicht",
   rating: 3, // optional, typically with type "rating"
@@ -48,7 +45,9 @@ reloop.submit({
 ```
 
 `url` defaults to `window.location.href` in the browser. Returns a promise
-that resolves once the item is queued (not necessarily delivered).
+that resolves once the feedback is delivered, or rejects with a
+`ReloopError` (with `status` and `body` for HTTP failures) if delivery
+fails.
 
 ### identify(user)
 
@@ -58,17 +57,10 @@ Associate — or change, e.g. after login — the user for subsequent feedback:
 reloop.identify({ id: "user_123", email: "marty@example.com" });
 ```
 
-### flush()
-
-Force-send everything currently queued:
-
-```ts
-await reloop.flush();
-```
-
 ## Delivery semantics
 
-Items are batched and flushed on an interval or when `batchSize` is reached.
-Failed sends retry with exponential backoff up to `maxRetries`; 4xx
-responses (bad key / validation) are dropped without retry. On page unload
-the queue is flushed via `navigator.sendBeacon`.
+Each `submit()` sends one HTTP POST and awaits the response. Transient
+network errors are retried once; HTTP responses (success or 4xx/5xx) are
+returned as-is — non-2xx responses reject with a `ReloopError`. The fetch
+uses `keepalive: true` so requests in flight when the page is closing have
+a chance to complete.

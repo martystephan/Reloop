@@ -1,4 +1,4 @@
-export { createClient, createNoopClient } from "./client.js";
+export { createClient, createNoopClient, ReloopError } from "./client.js";
 export type {
   Feedback,
   FeedbackType,

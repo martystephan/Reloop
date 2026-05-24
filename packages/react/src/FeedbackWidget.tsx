@@ -26,7 +26,7 @@ export function FeedbackWidget({
   title = "Send feedback",
   position = "bottom-right",
 }: FeedbackWidgetProps) {
-  const { submit, status, reset } = useFeedback();
+  const { submit, status, error, reset } = useFeedback();
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<FeedbackType>("idea");
   const [message, setMessage] = useState("");
@@ -178,7 +178,7 @@ export function FeedbackWidget({
                 <p
                   style={{ margin: "8px 0 0", color: "#dc2626", fontSize: 13 }}
                 >
-                  Something went wrong. Please try again.
+                  {error?.message ?? "Something went wrong. Please try again."}
                 </p>
               )}
 

@@ -23,7 +23,7 @@ const payloadSchema = z.object({
       name: z.string().max(200).optional(),
     })
     .optional(),
-  items: z.array(feedbackItem).min(1).max(50),
+  item: feedbackItem,
 });
 
 const limiter = rateLimit({
@@ -62,32 +62,30 @@ ingestRouter.post("/", limiter, (req, res) => {
   const userMeta = parsed.data.user
     ? JSON.stringify(parsed.data.user)
     : null;
-  const insert = db.prepare(
-    `INSERT INTO feedback (id, project_id, type, message, rating, url, user_meta, feedback_meta, api_key_id, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  );
+  const item = parsed.data.item;
   const now = Date.now();
-  const tx = db.transaction((items: z.infer<typeof feedbackItem>[]) => {
-    for (const it of items) {
-      insert.run(
-        newId(),
-        keyRow.project_id,
-        it.type,
-        it.message,
-        it.rating ?? null,
-        it.url ?? null,
-        userMeta,
-        it.meta ? JSON.stringify(it.meta) : null,
-        keyRow.id,
-        now,
-      );
-    }
+  const tx = db.transaction(() => {
+    db.prepare(
+      `INSERT INTO feedback (id, project_id, type, message, rating, url, user_meta, feedback_meta, api_key_id, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run(
+      newId(),
+      keyRow.project_id,
+      item.type,
+      item.message,
+      item.rating ?? null,
+      item.url ?? null,
+      userMeta,
+      item.meta ? JSON.stringify(item.meta) : null,
+      keyRow.id,
+      now,
+    );
     db.prepare("UPDATE api_keys SET last_used_at = ? WHERE id = ?").run(
       now,
       keyRow.id,
     );
   });
-  tx(parsed.data.items);
+  tx();
 
   // Fire email notifications asynchronously — never block the response.
   const linkedServices = db
@@ -104,9 +102,9 @@ ingestRouter.post("/", limiter, (req, res) => {
       .get(keyRow.project_id) as { name: string } | undefined;
     const projectName = project?.name ?? keyRow.project_id;
     for (const svc of linkedServices) {
-      sendViaService(svc, projectName, parsed.data.items, parsed.data.user ?? null);
+      sendViaService(svc, projectName, item, parsed.data.user ?? null);
     }
   }
 
-  res.status(202).json({ accepted: parsed.data.items.length });
+  res.status(202).json({ accepted: 1 });
 });

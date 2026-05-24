@@ -30,7 +30,7 @@ interface UserMeta {
 export function sendViaService(
   service: NotificationServiceRow,
   projectName: string,
-  items: FeedbackItem[],
+  item: FeedbackItem,
   user: UserMeta | null,
 ): void {
   const transport = nodemailer.createTransport({
@@ -40,14 +40,9 @@ export function sendViaService(
     auth: { user: service.smtp_user, pass: service.smtp_pass },
   });
 
-  const itemLines = items
-    .map((it) => {
-      const parts = [`[${it.type.toUpperCase()}] ${it.message}`];
-      if (it.rating != null) parts.push(`Rating: ${it.rating}/5`);
-      if (it.url) parts.push(`URL: ${it.url}`);
-      return parts.join("\n");
-    })
-    .join("\n\n---\n\n");
+  const itemLines = [`[${item.type.toUpperCase()}] ${item.message}`];
+  if (item.rating != null) itemLines.push(`Rating: ${item.rating}/5`);
+  if (item.url) itemLines.push(`URL: ${item.url}`);
 
   const userLine = user
     ? [user.name, user.email, user.id ? `id:${user.id}` : null]
@@ -59,7 +54,7 @@ export function sendViaService(
     `New feedback received for project: ${projectName}`,
     userLine ? `User: ${userLine}` : null,
     "",
-    itemLines,
+    itemLines.join("\n"),
   ]
     .filter((l) => l !== null)
     .join("\n");
@@ -68,7 +63,7 @@ export function sendViaService(
     .sendMail({
       from: `Reloop <${service.from_address}>`,
       to: service.to_address,
-      subject: `[Reloop] ${items.length === 1 ? "New feedback" : `${items.length} new feedback items`} — ${projectName}`,
+      subject: `[Reloop] New feedback — ${projectName}`,
       text,
     })
     .catch((err) => {

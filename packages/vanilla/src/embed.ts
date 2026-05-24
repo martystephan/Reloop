@@ -18,7 +18,15 @@ function autoInit() {
 
   const apiKey = script.getAttribute("data-reloop-key");
   const endpoint = script.getAttribute("data-reloop-endpoint");
-  if (!apiKey || !endpoint) return;
+  if (!apiKey || !endpoint) {
+    const missing = [!apiKey && "data-reloop-key", !endpoint && "data-reloop-endpoint"]
+      .filter(Boolean)
+      .join(" and ");
+    console.warn(
+      `[reloop] ${missing} missing on <script> — widget will not mount.`,
+    );
+    return;
+  }
 
   const config: WidgetConfig = {
     apiKey,

@@ -32,24 +32,16 @@ export interface ReloopOptions {
    * (or changed, e.g. after login) later via client.identify().
    */
   user?: FeedbackUser;
-  /** Flush the queue automatically after this many ms. Default 3000. */
-  flushInterval?: number;
-  /** Max items per network request. Default 10. */
-  batchSize?: number;
-  /** Max send retries per batch before dropping. Default 3. */
-  maxRetries?: number;
 }
 
 export interface ReloopClient {
   /** Associate subsequent feedback with a user. */
   identify(user: FeedbackUser): void;
-  /** Queue a feedback item for delivery. */
+  /** Send a feedback item. Resolves on success, rejects on failure. */
   submit(feedback: Feedback): Promise<void>;
-  /** Force-send everything currently queued. */
-  flush(): Promise<void>;
 }
 
 export interface IngestPayload {
   user?: FeedbackUser;
-  items: Feedback[];
+  item: Feedback;
 }

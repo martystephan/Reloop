@@ -33,7 +33,7 @@ export const FeedbackWidget = defineComponent({
     position: { type: String, default: "bottom-right" },
   },
   setup(props) {
-    const { submit, status, reset } = useFeedback();
+    const { submit, status, error, reset } = useFeedback();
     const open = ref(false);
     const type = ref<FeedbackType>("idea");
     const message = ref("");
@@ -173,7 +173,8 @@ export const FeedbackWidget = defineComponent({
                         fontSize: "13px",
                       },
                     },
-                    "Something went wrong. Please try again.",
+                    error.value?.message ??
+                      "Something went wrong. Please try again.",
                   )
                 : null,
               h(
