@@ -1,6 +1,6 @@
 import type { App, InjectionKey } from "vue";
 import { inject } from "vue";
-import { createClient, type ReloopClient, type ReloopOptions } from "@reloop-sdk/core";
+import { createClient, createNoopClient, type ReloopClient, type ReloopOptions } from "@reloop-sdk/core";
 
 export const ReloopKey: InjectionKey<ReloopClient> = Symbol("reloop");
 
@@ -10,7 +10,11 @@ export interface ReloopPluginOptions extends Partial<ReloopOptions> {
 
 export const ReloopPlugin = {
   install(app: App, options: ReloopPluginOptions) {
-    const client = options.client ?? createClient(options as ReloopOptions);
+    const client = options.client ?? (
+      options.apiKey && options.endpoint
+        ? createClient(options as ReloopOptions)
+        : createNoopClient()
+    );
     app.provide(ReloopKey, client);
     app.config.globalProperties.$reloop = client;
   },
