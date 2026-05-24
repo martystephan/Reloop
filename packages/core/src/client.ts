@@ -8,6 +8,14 @@ import type {
 
 const isBrowser = typeof window !== "undefined";
 
+export function createNoopClient(): ReloopClient {
+  return {
+    identify() {},
+    async submit() {},
+    async flush() {},
+  };
+}
+
 export function createClient(options: ReloopOptions): ReloopClient {
   if (!options.apiKey) throw new Error("[reloop] apiKey is required");
   if (!options.endpoint) throw new Error("[reloop] endpoint is required");
