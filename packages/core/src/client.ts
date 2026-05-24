@@ -22,7 +22,11 @@ export class ReloopError extends Error {
 export function createNoopClient(): ReloopClient {
   return {
     identify() {},
-    async submit() {},
+    async submit() {
+      throw new ReloopError(
+        "reloop not configured — apiKey/endpoint missing",
+      );
+    },
   };
 }
 
