@@ -26,7 +26,7 @@ feedbackRouter.get("/projects/:projectId/feedback", (req: AuthedRequest, res) =>
 
   const items = db
     .prepare(
-      `SELECT f.id, f.type, f.message, f.rating, f.url, f.user_meta,
+      `SELECT f.id, f.type, f.message, f.rating, f.url, f.user_meta, f.feedback_meta,
               f.created_at, k.name AS api_key_name
        FROM feedback f
        LEFT JOIN api_keys k ON k.id = f.api_key_id

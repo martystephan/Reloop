@@ -60,6 +60,7 @@ export interface FeedbackItem {
   rating: number | null;
   url: string | null;
   user_meta: string | null;
+  feedback_meta: string | null;
   api_key_name: string | null;
   created_at: number;
 }

@@ -10,15 +10,47 @@ const apiKey = import.meta.env.VITE_RELOOP_KEY ?? "";
 // Empty endpoint -> same origin, so the Vite proxy forwards /api to :8787.
 const endpoint = import.meta.env.VITE_RELOOP_ENDPOINT || window.location.origin;
 
+type MetaRow = { key: string; value: string };
+
 function CustomForm() {
   const { submit, status, error, reset } = useFeedback();
   const [type, setType] = useState<FeedbackType>("idea");
   const [message, setMessage] = useState("");
+  const [metaRows, setMetaRows] = useState<MetaRow[]>([
+    { key: "feature", value: "" },
+  ]);
+
+  function updateRow(i: number, patch: Partial<MetaRow>) {
+    setMetaRows((rows) => rows.map((r, j) => (i === j ? { ...r, ...patch } : r)));
+  }
+  function addRow() {
+    setMetaRows((rows) => [...rows, { key: "", value: "" }]);
+  }
+  function removeRow(i: number) {
+    setMetaRows((rows) => rows.filter((_, j) => i !== j));
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!message.trim()) return;
-    await submit({ type, message, meta: { source: "react-demo" } });
+    const customMeta: Record<string, string> = {};
+    for (const { key, value } of metaRows) {
+      const k = key.trim();
+      if (k) customMeta[k] = value;
+    }
+    await submit({
+      type,
+      message,
+      meta: {
+        source: "react-demo",
+        form: "custom",
+        pathname: window.location.pathname,
+        viewport: { w: window.innerWidth, h: window.innerHeight },
+        locale: navigator.language,
+        submittedAt: new Date().toISOString(),
+        ...customMeta,
+      },
+    });
     setMessage("");
   }
 
@@ -51,6 +83,52 @@ function CustomForm() {
         placeholder="Type some feedback…"
         style={{ width: "100%", padding: 8 }}
       />
+      <fieldset
+        style={{
+          marginTop: 12,
+          padding: 8,
+          border: "1px solid #e5e7eb",
+          borderRadius: 6,
+        }}
+      >
+        <legend style={{ padding: "0 4px", fontSize: 12, color: "#6b7280" }}>
+          Custom meta
+        </legend>
+        {metaRows.map((row, i) => (
+          <div
+            key={i}
+            style={{ display: "flex", gap: 6, marginBottom: 6 }}
+          >
+            <input
+              value={row.key}
+              onChange={(e) => updateRow(i, { key: e.target.value })}
+              placeholder="key"
+              style={{ flex: 1, padding: 6 }}
+            />
+            <input
+              value={row.value}
+              onChange={(e) => updateRow(i, { value: e.target.value })}
+              placeholder="value"
+              style={{ flex: 2, padding: 6 }}
+            />
+            <button
+              type="button"
+              onClick={() => removeRow(i)}
+              aria-label="Remove row"
+              style={{ padding: "0 10px" }}
+            >
+              ×
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={addRow}
+          style={{ padding: "4px 10px", fontSize: 12 }}
+        >
+          + Add field
+        </button>
+      </fieldset>
       <div style={{ marginTop: 8 }}>
         <button type="submit" disabled={status === "submitting"}>
           {status === "submitting" ? "Sending…" : "Submit"}

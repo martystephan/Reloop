@@ -52,6 +52,13 @@ export function migrate(): void {
     db.exec("ALTER TABLE feedback ADD COLUMN api_key_id TEXT");
   }
 
+  const hasFeedbackMeta = db
+    .prepare("SELECT 1 FROM pragma_table_info('feedback') WHERE name = ?")
+    .get("feedback_meta");
+  if (!hasFeedbackMeta) {
+    db.exec("ALTER TABLE feedback ADD COLUMN feedback_meta TEXT");
+  }
+
   db.exec(`
     CREATE TABLE IF NOT EXISTS notification_services (
       id           TEXT PRIMARY KEY,

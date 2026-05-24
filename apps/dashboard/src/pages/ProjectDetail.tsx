@@ -195,6 +195,23 @@ function FeedbackModal({
     /* leave raw */
   }
 
+  let feedbackMeta = feedback.feedback_meta;
+  let screenshot: string | null = null;
+  try {
+    if (feedbackMeta) {
+      const parsed = JSON.parse(feedbackMeta) as Record<string, unknown>;
+      if (typeof parsed.screenshot === "string") {
+        screenshot = parsed.screenshot;
+        delete parsed.screenshot;
+      }
+      feedbackMeta = Object.keys(parsed).length
+        ? JSON.stringify(parsed, null, 2)
+        : null;
+    }
+  } catch {
+    /* leave raw */
+  }
+
   const rows: { label: string; value: React.ReactNode }[] = [
     {
       label: "Type",
@@ -268,6 +285,32 @@ function FeedbackModal({
               <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-md bg-muted p-3 font-mono text-xs">
                 {meta}
               </pre>
+            </div>
+          )}
+
+          {feedbackMeta && (
+            <div>
+              <p className="mb-1 text-xs font-medium text-muted-foreground">
+                Feedback metadata
+              </p>
+              <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-md bg-muted p-3 font-mono text-xs">
+                {feedbackMeta}
+              </pre>
+            </div>
+          )}
+
+          {screenshot && (
+            <div>
+              <p className="mb-1 text-xs font-medium text-muted-foreground">
+                Screenshot
+              </p>
+              <a href={screenshot} target="_blank" rel="noreferrer">
+                <img
+                  src={screenshot}
+                  alt="Feedback screenshot"
+                  className="max-h-96 w-full rounded-md border object-contain"
+                />
+              </a>
             </div>
           )}
         </div>

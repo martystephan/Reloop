@@ -63,8 +63,8 @@ ingestRouter.post("/", limiter, (req, res) => {
     ? JSON.stringify(parsed.data.user)
     : null;
   const insert = db.prepare(
-    `INSERT INTO feedback (id, project_id, type, message, rating, url, user_meta, api_key_id, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO feedback (id, project_id, type, message, rating, url, user_meta, feedback_meta, api_key_id, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   const now = Date.now();
   const tx = db.transaction((items: z.infer<typeof feedbackItem>[]) => {
@@ -77,6 +77,7 @@ ingestRouter.post("/", limiter, (req, res) => {
         it.rating ?? null,
         it.url ?? null,
         userMeta,
+        it.meta ? JSON.stringify(it.meta) : null,
         keyRow.id,
         now,
       );
