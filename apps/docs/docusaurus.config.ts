@@ -39,6 +39,7 @@ const config: Config = {
           // Serve docs at the site root — this is a docs-only site.
           routeBasePath: "/",
           sidebarPath: "./sidebars.ts",
+          editUrl: "https://github.com/martystephan/Reloop/tree/main/apps/docs",
         },
         blog: false,
         theme: {
@@ -61,11 +62,26 @@ const config: Config = {
           position: "left",
           label: "Docs",
         },
+        {
+          href: "https://github.com/martystephan/Reloop",
+          label: "GitHub",
+          position: "right",
+        },
       ],
     },
     footer: {
       style: "dark",
-      links: [],
+      links: [
+        {
+          title: "More",
+          items: [
+            {
+              label: "GitHub",
+              href: "https://github.com/martystephan/Reloop",
+            },
+          ],
+        },
+      ],
       copyright: "Reloop — built with Docusaurus.",
     },
     prism: {
