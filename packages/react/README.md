@@ -8,8 +8,8 @@ npm install @reloop-sdk/core @reloop-sdk/react
 
 ## 1. Wrap your app
 
-Provide the client once, near the root. Each API key is locked to a single
-item type (`bug`, `feedback`, `waitlist`, `question` or `other`).
+Provide the client once, near the root. An API key can send any submission
+type (`bug`, `feedback`, `waitlist`, `question` or `other`).
 
 ```tsx
 import { ReloopProvider } from "@reloop-sdk/react";
@@ -147,8 +147,7 @@ await reloop.submit({ type: "feedback", message: "Nice!" });
 
 ## &lt;FeedbackWidget /&gt;
 
-A drop-in floating launcher + panel that submits a `feedback` item. Use it
-with a key whose type is `feedback`.
+A drop-in floating launcher + panel that submits a `feedback` item.
 
 ```tsx
 import { ReloopProvider, FeedbackWidget } from "@reloop-sdk/react";

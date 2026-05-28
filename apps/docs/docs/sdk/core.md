@@ -32,11 +32,10 @@ export const reloop = createClient({
 
 ## submit(item)
 
-Each API key is locked to a single item type, so the item's `type` must
-match the key. `submit` accepts one of five shapes. `meta` is an optional
-free-form object on every type; `email` is optional on every type (handy for
-replies or mailings); `bug`, `question` and `other` also accept an optional
-base64 `screenshot`:
+`submit` accepts one of five shapes. `meta` is an optional free-form object
+on every type; `email` is optional on every type (handy for replies or
+mailings); `bug`, `question` and `other` also accept an optional base64
+`screenshot`:
 
 ```ts
 import { reloop } from "./reloop";
@@ -85,7 +84,7 @@ try {
   await reloop.submit({ type: "feedback", message: "Hi" });
 } catch (err) {
   if (err instanceof ReloopError) {
-    console.error(err.status, err.message); // e.g. 403 type_not_allowed
+    console.error(err.status, err.message); // e.g. 401 invalid_api_key
   }
 }
 ```

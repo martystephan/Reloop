@@ -66,7 +66,6 @@ export interface NotificationServiceInput {
 export interface ApiKey {
   id: string;
   name: string;
-  type: SubmissionType;
   prefix: string;
   created_at: number;
   last_used_at: number | null;
@@ -110,10 +109,10 @@ export const api = {
 
   listKeys: (projectId: string) =>
     request<{ keys: ApiKey[] }>(`/projects/${projectId}/keys`).then((r) => r.keys),
-  createKey: (projectId: string, name: string, type: SubmissionType) =>
+  createKey: (projectId: string, name: string) =>
     request<{ key: ApiKey; secret: string }>(`/projects/${projectId}/keys`, {
       method: "POST",
-      body: JSON.stringify({ name, type }),
+      body: JSON.stringify({ name }),
     }),
   revokeKey: (id: string) => request<void>(`/keys/${id}`, { method: "DELETE" }),
 

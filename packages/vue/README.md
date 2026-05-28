@@ -8,7 +8,7 @@ npm install @reloop-sdk/core @reloop-sdk/vue
 
 ## 1. Register the plugin
 
-Install the client once. Each API key is locked to a single item type
+Install the client once. An API key can send any submission type
 (`bug`, `feedback`, `waitlist`, `question` or `other`).
 
 ```ts

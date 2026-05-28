@@ -9,9 +9,8 @@ Keys authenticate the SDK against your server's ingest endpoint.
 
 - **Publishable.** Keys are prefixed `rl_pub_` and are safe to ship in
   client-side code. They can only *submit* items — never read them.
-- **Single type.** Each key is locked to one item type (`bug`, `feedback`,
-  `waitlist`, `question` or `other`), chosen at creation. A submission whose `type`
-  doesn't match the key is rejected with `403 type_not_allowed`.
+- **Any type.** A single key can send any submission type (`bug`,
+  `feedback`, `waitlist`, `question`, `other`).
 - **Shown once.** The raw value is displayed a single time when created.
   The server stores only a SHA-256 hash plus a short prefix for display.
 - **Scoped to a project.** Items sent with a key land in that key's project.
@@ -20,14 +19,12 @@ Keys authenticate the SDK against your server's ingest endpoint.
 
 ## Creating a key
 
-Dashboard → your project → **API Keys** → **Create key**. Pick the item type
-the key may send, then copy the value from the dialog right away; you can't
-retrieve it later. If you lose it, create a new key and revoke the old one.
-
-Need to collect more than one type? Create one key per type.
+Dashboard → your project → **API Keys** → **Create key**. Give it a name,
+then copy the value from the dialog right away; you can't retrieve it later.
+If you lose it, create a new key and revoke the old one.
 
 ## Rotating
 
-1. Create a new key (same type).
+1. Create a new key.
 2. Deploy it to your app.
 3. Revoke the old key once traffic has moved over.

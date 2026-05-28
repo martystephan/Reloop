@@ -23,7 +23,6 @@ export function migrate(): void {
       id           TEXT PRIMARY KEY,
       project_id   TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
       name         TEXT NOT NULL,
-      type         TEXT NOT NULL DEFAULT 'feedback',
       key_hash     TEXT NOT NULL UNIQUE,
       prefix       TEXT NOT NULL,
       created_at   INTEGER NOT NULL,
@@ -47,14 +46,6 @@ export function migrate(): void {
     );
     CREATE INDEX IF NOT EXISTS idx_submissions_project ON submissions(project_id, created_at DESC);
   `);
-
-  // Added after a key could only carry a single submission type.
-  const hasKeyType = db
-    .prepare("SELECT 1 FROM pragma_table_info('api_keys') WHERE name = ?")
-    .get("type");
-  if (!hasKeyType) {
-    db.exec("ALTER TABLE api_keys ADD COLUMN type TEXT NOT NULL DEFAULT 'feedback'");
-  }
 
   const submissionCols = db
     .prepare("SELECT name FROM pragma_table_info('submissions')")

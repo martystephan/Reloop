@@ -8,8 +8,7 @@ title: Getting started
 ## 1. Create a project and key
 
 In the dashboard, create a project, open it, go to **API Keys** and click
-**Create key**. Choose the **item type** the key may send (bug, feedback,
-waitlist or question) — a key is locked to that single type. The raw key
+**Create key**. A key can send any submission type. The raw key
 (`rl_pub_…`) is shown **once** — copy it then. Only a hash is stored
 server-side.
 
@@ -39,8 +38,7 @@ await reloop.submit({
 });
 ```
 
-The item's `type` must match the key's type, otherwise the server rejects
-it. Each call sends a single HTTP request and resolves on success or rejects
+Each call sends a single HTTP request and resolves on success or rejects
 with a `ReloopError` on failure.
 
 Next: pick your integration — [Core](./sdk/core.md),

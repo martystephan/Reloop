@@ -457,7 +457,6 @@ function SubmissionModal({
 function KeysTab({ projectId }: { projectId: string }) {
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [name, setName] = useState("");
-  const [type, setType] = useState<SubmissionType>("feedback");
   const [open, setOpen] = useState(false);
   const [secret, setSecret] = useState<string | null>(null);
   const [keyToRevoke, setKeyToRevoke] = useState<ApiKey | null>(null);
@@ -473,9 +472,8 @@ function KeysTab({ projectId }: { projectId: string }) {
   async function create(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
-    const res = await api.createKey(projectId, name.trim(), type);
+    const res = await api.createKey(projectId, name.trim());
     setName("");
-    setType("feedback");
     setOpen(false);
     setSecret(res.secret);
     load();
@@ -499,8 +497,8 @@ function KeysTab({ projectId }: { projectId: string }) {
             <DialogHeader>
               <DialogTitle>Create API key</DialogTitle>
               <DialogDescription>
-                Name the key and choose which submission type it may send.
-                A key is locked to that single type.
+                Give the key a name so you can recognize where it's used. A key
+                can send any submission type.
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={create} className="flex flex-col gap-4">
@@ -510,21 +508,6 @@ function KeysTab({ projectId }: { projectId: string }) {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
-              <Select
-                value={type}
-                onValueChange={(v) => setType(v as SubmissionType)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SUBMISSION_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>
-                      {t.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
               <DialogFooter>
                 <Button
                   type="button"
@@ -548,7 +531,6 @@ function KeysTab({ projectId }: { projectId: string }) {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead className="w-24">Type</TableHead>
               <TableHead>Key</TableHead>
               <TableHead className="hidden sm:table-cell">Status</TableHead>
               <TableHead className="w-12" />
@@ -558,11 +540,6 @@ function KeysTab({ projectId }: { projectId: string }) {
             {keys.map((k) => (
               <TableRow key={k.id}>
                 <TableCell className="font-medium max-w-[8rem] truncate">{k.name}</TableCell>
-                <TableCell>
-                  <Badge variant="secondary" className="capitalize">
-                    {k.type}
-                  </Badge>
-                </TableCell>
                 <TableCell>
                   <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
                     {k.prefix}
@@ -604,7 +581,7 @@ function KeysTab({ projectId }: { projectId: string }) {
             {keys.length === 0 && (
               <TableRow className="hover:bg-transparent">
                 <TableCell
-                  colSpan={5}
+                  colSpan={4}
                   className="py-8 text-center text-muted-foreground"
                 >
                   No keys yet.

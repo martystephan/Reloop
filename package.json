@@ -1,8 +1,8 @@
 {
   "name": "reloop",
   "private": true,
-  "version": "0.3.0",
-  "description": "Self-hostable feedback SDK + dashboard monorepo",
+  "version": "0.3.1",
+  "description": "Self-hostable SDK + dashboard for bug reports, feedback, waitlist signups & questions (monorepo)",
   "license": "MIT",
   "packageManager": "pnpm@11.1.2",
   "scripts": {

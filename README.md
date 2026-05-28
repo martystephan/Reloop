@@ -27,7 +27,7 @@ optional on every type:
 | `question`  | `subject`, `message`, `screenshot?`, `email?`, `meta?`|
 | `other`     | everything optional — escape hatch                    |
 
-Each API key is locked to a single type. In the dashboard, every submission
+An API key can send any submission type. In the dashboard, every submission
 carries a triage **status** (new / open / resolved / archived).
 
 ## Develop

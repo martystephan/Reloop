@@ -1,7 +1,7 @@
 {
   "name": "@reloop-sdk/vanilla",
-  "version": "0.3.0",
-  "description": "Standalone script-tag embeddable feedback widget",
+  "version": "0.3.1",
+  "description": "Embeddable script-tag feedback widget + client for the Reloop SDK",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

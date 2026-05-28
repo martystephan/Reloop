@@ -8,10 +8,7 @@ import { assertOwnedProject } from "./projects.js";
 export const keysRouter = Router();
 keysRouter.use(requireUser);
 
-const createSchema = z.object({
-  name: z.string().min(1).max(80),
-  type: z.enum(["bug", "feedback", "waitlist", "question", "other"]),
-});
+const createSchema = z.object({ name: z.string().min(1).max(80) });
 
 /** List keys for a project (never returns the raw secret). */
 keysRouter.get("/projects/:projectId/keys", (req: AuthedRequest, res) => {
@@ -22,7 +19,7 @@ keysRouter.get("/projects/:projectId/keys", (req: AuthedRequest, res) => {
   }
   const rows = db
     .prepare(
-      `SELECT id, name, type, prefix, created_at, last_used_at, revoked_at
+      `SELECT id, name, prefix, created_at, last_used_at, revoked_at
        FROM api_keys WHERE project_id = ? ORDER BY created_at DESC`,
     )
     .all(req.params.projectId);
@@ -43,20 +40,12 @@ keysRouter.post("/projects/:projectId/keys", (req: AuthedRequest, res) => {
   const { raw, hash, prefix } = generateApiKey();
   const id = newId();
   db.prepare(
-    `INSERT INTO api_keys (id, project_id, name, type, key_hash, prefix, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-  ).run(
-    id,
-    req.params.projectId,
-    parsed.data.name,
-    parsed.data.type,
-    hash,
-    prefix,
-    Date.now(),
-  );
+    `INSERT INTO api_keys (id, project_id, name, key_hash, prefix, created_at)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+  ).run(id, req.params.projectId, parsed.data.name, hash, prefix, Date.now());
 
   res.status(201).json({
-    key: { id, name: parsed.data.name, type: parsed.data.type, prefix },
+    key: { id, name: parsed.data.name, prefix },
     // Surfaced once — the dashboard shows this in a copy-me-now modal.
     secret: raw,
   });

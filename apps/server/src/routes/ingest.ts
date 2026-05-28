@@ -62,7 +62,6 @@ const limiter = rateLimit({
 interface KeyRow {
   id: string;
   project_id: string;
-  type: string;
   revoked_at: number | null;
 }
 
@@ -73,7 +72,7 @@ ingestRouter.post("/", limiter, (req, res) => {
 
   const keyRow = db
     .prepare(
-      "SELECT id, project_id, type, revoked_at FROM api_keys WHERE key_hash = ?",
+      "SELECT id, project_id, revoked_at FROM api_keys WHERE key_hash = ?",
     )
     .get(hashApiKey(raw)) as KeyRow | undefined;
 
@@ -87,13 +86,6 @@ ingestRouter.post("/", limiter, (req, res) => {
   }
 
   const item = parsed.data;
-  if (item.type !== keyRow.type) {
-    return res.status(403).json({
-      error: "type_not_allowed",
-      allowed: keyRow.type,
-    });
-  }
-
   const subject = "subject" in item ? (item.subject ?? null) : null;
   const message = "message" in item ? (item.message ?? null) : null;
   const email = "email" in item ? (item.email ?? null) : null;

@@ -38,8 +38,8 @@ archived) that you manage there.
 ## How it fits together
 
 1. Run the **server** (Express + SQLite) and **dashboard** (React + Vite).
-2. Sign in, create a project, generate an **API key** — each key is locked
-   to a single item type.
+2. Sign in, create a project, generate an **API key** — a key can send any
+   submission type.
 3. Install an SDK package, point it at your server `endpoint`, and `submit()`.
 
 The `endpoint` is always the **base URL** of your server — the SDK appends

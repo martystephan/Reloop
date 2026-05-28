@@ -11,7 +11,7 @@ item type.
 ## Feedback widget (script tag)
 
 The widget auto-initialises from `data-*` attributes on the script element
-and submits `feedback` items, so use it with a key whose type is `feedback`.
+and submits `feedback` items.
 
 ```html
 <script
@@ -24,7 +24,7 @@ and submits `feedback` items, so use it with a key whose type is `feedback`.
 
 | Attribute               | Required | Description                              |
 | ----------------------- | -------- | ---------------------------------------- |
-| `data-reloop-key`       | yes      | Publishable API key (feedback type).     |
+| `data-reloop-key`       | yes      | Publishable API key.                     |
 | `data-reloop-endpoint`  | yes      | Base URL of your server.                 |
 | `data-reloop-title`     | no       | Panel heading.                           |
 | `data-reloop-position`  | no       | `bottom-right` (default) or `bottom-left`|
@@ -56,7 +56,7 @@ questions. Here's a waitlist form wired up by hand:
 <script src="https://reloop.example.com/embed/reloop.global.js"></script>
 <script>
   const reloop = Reloop.createClient({
-    apiKey: "rl_pub_...", // a waitlist-type key
+    apiKey: "rl_pub_...",
     endpoint: "https://reloop.example.com",
   });
 

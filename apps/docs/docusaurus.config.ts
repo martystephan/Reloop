@@ -4,7 +4,7 @@ import type * as Preset from "@docusaurus/preset-classic";
 
 const config: Config = {
   title: "Reloop",
-  tagline: "Self-hostable feedback SDK & dashboard",
+  tagline: "Self-hostable SDK & dashboard for bugs, feedback, waitlist & questions",
   favicon: "img/favicon.ico",
 
   future: {
