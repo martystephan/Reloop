@@ -1,12 +1,5 @@
 import { defineComponent, h, ref } from "vue";
-import type { FeedbackType } from "@reloop-sdk/core";
-import { useFeedback } from "./useFeedback.js";
-
-const TYPES: { value: FeedbackType; label: string }[] = [
-  { value: "bug", label: "Bug" },
-  { value: "idea", label: "Idea" },
-  { value: "praise", label: "Praise" },
-];
+import { useSubmit } from "./useSubmit.js";
 
 const FONT =
   "14px -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
@@ -33,15 +26,14 @@ export const FeedbackWidget = defineComponent({
     position: { type: String, default: "bottom-right" },
   },
   setup(props) {
-    const { submit, status, error, reset } = useFeedback();
+    const { submit, status, error, reset } = useSubmit();
     const open = ref(false);
-    const type = ref<FeedbackType>("idea");
     const message = ref("");
 
     async function onSubmit(e: Event) {
       e.preventDefault();
       if (!message.value.trim()) return;
-      await submit({ type: type.value, message: message.value });
+      await submit({ type: "feedback", message: message.value });
       message.value = "";
     }
 
@@ -117,33 +109,6 @@ export const FeedbackWidget = defineComponent({
               ),
             ])
           : h("div", [
-              h(
-                "div",
-                { style: { display: "flex", gap: "8px", marginBottom: "12px" } },
-                TYPES.map((t) => {
-                  const active = type.value === t.value;
-                  return h(
-                    "button",
-                    {
-                      key: t.value,
-                      type: "button",
-                      onClick: () => (type.value = t.value),
-                      style: {
-                        flex: "1",
-                        padding: "8px 0",
-                        fontSize: "13px",
-                        borderRadius: "10px",
-                        border: `1px solid ${active ? INK : BORDER}`,
-                        background: active ? INK : "#fff",
-                        color: active ? "#fff" : INK,
-                        cursor: "pointer",
-                        transition: "background 120ms, border-color 120ms",
-                      },
-                    },
-                    t.label,
-                  );
-                }),
-              ),
               h("textarea", {
                 class: "reloop-field",
                 rows: 4,

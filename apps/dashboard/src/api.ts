@@ -11,11 +11,20 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.status === 204 ? (undefined as T) : ((await res.json()) as T);
 }
 
+export type SubmissionType =
+  | "bug"
+  | "feedback"
+  | "waitlist"
+  | "question"
+  | "other";
+
+export type SubmissionStatus = "new" | "open" | "resolved" | "archived";
+
 export interface Project {
   id: string;
   name: string;
   created_at: number;
-  feedback_count: number;
+  submission_count: number;
   notification_service_count: number;
 }
 
@@ -30,6 +39,11 @@ export interface NotificationService {
   smtp_pass: string;
   from_address: string;
   to_address: string;
+  include_subject: number;
+  include_message: number;
+  include_email: number;
+  include_meta: number;
+  include_screenshot: number;
   created_at: number;
 }
 
@@ -42,27 +56,40 @@ export interface NotificationServiceInput {
   smtp_pass: string;
   from_address: string;
   to_address: string;
+  include_subject: boolean;
+  include_message: boolean;
+  include_email: boolean;
+  include_meta: boolean;
+  include_screenshot: boolean;
 }
 
 export interface ApiKey {
   id: string;
   name: string;
+  type: SubmissionType;
   prefix: string;
   created_at: number;
   last_used_at: number | null;
   revoked_at: number | null;
 }
 
-export interface FeedbackItem {
+/** A row in the submissions list. Screenshot/meta are omitted for size. */
+export interface Submission {
   id: string;
-  type: string;
-  message: string;
-  rating: number | null;
-  url: string | null;
-  user_meta: string | null;
-  feedback_meta: string | null;
+  type: SubmissionType;
+  subject: string | null;
+  message: string | null;
+  email: string | null;
+  has_screenshot: number;
+  status: SubmissionStatus;
   api_key_name: string | null;
   created_at: number;
+}
+
+/** A single submission with its full payload, loaded on demand. */
+export interface SubmissionDetail extends Omit<Submission, "has_screenshot"> {
+  screenshot: string | null;
+  meta: string | null;
 }
 
 export const api = {
@@ -83,17 +110,46 @@ export const api = {
 
   listKeys: (projectId: string) =>
     request<{ keys: ApiKey[] }>(`/projects/${projectId}/keys`).then((r) => r.keys),
-  createKey: (projectId: string, name: string) =>
+  createKey: (projectId: string, name: string, type: SubmissionType) =>
     request<{ key: ApiKey; secret: string }>(`/projects/${projectId}/keys`, {
       method: "POST",
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name, type }),
     }),
   revokeKey: (id: string) => request<void>(`/keys/${id}`, { method: "DELETE" }),
 
-  listFeedback: (projectId: string, type?: string) =>
-    request<{ items: FeedbackItem[]; total: number }>(
-      `/projects/${projectId}/feedback${type ? `?type=${type}` : ""}`,
+  listSubmissions: (
+    projectId: string,
+    filters: {
+      type?: string;
+      status?: string;
+      keyId?: string;
+      limit?: number;
+      offset?: number;
+    } = {},
+  ) => {
+    const qs = new URLSearchParams();
+    if (filters.type) qs.set("type", filters.type);
+    if (filters.status) qs.set("status", filters.status);
+    if (filters.keyId) qs.set("keyId", filters.keyId);
+    if (filters.limit != null) qs.set("limit", String(filters.limit));
+    if (filters.offset != null) qs.set("offset", String(filters.offset));
+    const suffix = qs.toString() ? `?${qs}` : "";
+    return request<{
+      items: Submission[];
+      total: number;
+      limit: number;
+      offset: number;
+    }>(`/projects/${projectId}/submissions${suffix}`);
+  },
+  getSubmission: (id: string) =>
+    request<{ submission: SubmissionDetail }>(`/submissions/${id}`).then(
+      (r) => r.submission,
     ),
+  updateSubmissionStatus: (id: string, status: SubmissionStatus) =>
+    request<{ id: string; status: SubmissionStatus }>(`/submissions/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    }),
 
   listNotificationServices: () =>
     request<{ services: NotificationService[] }>("/notification-services").then(

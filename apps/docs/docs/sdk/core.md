@@ -11,50 +11,102 @@ The framework-agnostic client. React, Vue and the vanilla widget all wrap it.
 npm install @reloop-sdk/core
 ```
 
-## createClient(options)
+## Create a client once, submit anywhere
 
 ```ts
+// reloop.ts
 import { createClient } from "@reloop-sdk/core";
 
-const reloop = createClient({
+export const reloop = createClient({
   apiKey: "rl_pub_...",
-  endpoint: "https://feedback.example.com",
-  user: { id: "user_123", email: "marty@example.com" },
+  endpoint: "https://reloop.example.com", // base URL; SDK appends /api/ingest
 });
 ```
 
 ### Options
 
-| Option     | Type          | Default | Description                                              |
-| ---------- | ------------- | ------- | -------------------------------------------------------- |
-| `apiKey`   | `string`      | —       | Publishable key from the dashboard (required).           |
-| `endpoint` | `string`      | —       | **Base URL** of your server. SDK appends `/api/ingest`.  |
-| `user`     | `FeedbackUser`| —       | User to attach to feedback. Optional.                    |
+| Option     | Type     | Default | Description                                              |
+| ---------- | -------- | ------- | -------------------------------------------------------- |
+| `apiKey`   | `string` | —       | Publishable key from the dashboard (required).           |
+| `endpoint` | `string` | —       | **Base URL** of your server. SDK appends `/api/ingest`.  |
 
-## Methods
+## submit(item)
 
-### submit(feedback)
+Each API key is locked to a single item type, so the item's `type` must
+match the key. `submit` accepts one of five shapes. `meta` is an optional
+free-form object on every type; `email` is optional on every type (handy for
+replies or mailings); `bug`, `question` and `other` also accept an optional
+base64 `screenshot`:
 
 ```ts
+import { reloop } from "./reloop";
+
+// bug — subject + message, optional screenshot/email
 await reloop.submit({
-  type: "bug", // "bug" | "idea" | "praise" | "rating"
-  message: "Button funktioniert nicht",
-  rating: 3, // optional, typically with type "rating"
-  meta: { route: "/inbox", appVersion: "0.1.0" }, // optional
+  type: "bug",
+  subject: "Export button 404s",
+  message: "Clicking export on /reports returns a 404.",
+  email: "reporter@example.com", // optional
+  screenshot: "data:image/png;base64,iVBOR...", // optional
+  meta: { route: "/reports", appVersion: "1.2.0" },
+});
+
+// feedback — just a message
+await reloop.submit({ type: "feedback", message: "Love the new dashboard!" });
+
+// waitlist — an email
+await reloop.submit({ type: "waitlist", email: "you@example.com" });
+
+// question — subject + message
+await reloop.submit({
+  type: "question",
+  subject: "Billing",
+  message: "Can I switch to annual billing mid-cycle?",
+});
+
+// other — escape hatch, every field optional
+await reloop.submit({
+  type: "other",
+  message: "NPS score: 9",
+  meta: { campaign: "q3-survey" },
 });
 ```
 
-`url` defaults to `window.location.href` in the browser. Returns a promise
-that resolves once the feedback is delivered, or rejects with a
-`ReloopError` (with `status` and `body` for HTTP failures) if delivery
-fails.
+## Handling errors
 
-### identify(user)
-
-Associate — or change, e.g. after login — the user for subsequent feedback:
+`submit()` resolves on success and rejects with a `ReloopError` on failure.
+Transient network errors are retried once; HTTP failures carry `status` and
+`body`:
 
 ```ts
-reloop.identify({ id: "user_123", email: "marty@example.com" });
+import { reloop, ReloopError } from "@reloop-sdk/core";
+
+try {
+  await reloop.submit({ type: "feedback", message: "Hi" });
+} catch (err) {
+  if (err instanceof ReloopError) {
+    console.error(err.status, err.message); // e.g. 403 type_not_allowed
+  }
+}
+```
+
+## A complete example (no framework)
+
+```ts
+const form = document.querySelector("form")!;
+const status = document.querySelector("#status")!;
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = (form.elements.namedItem("email") as HTMLInputElement).value;
+  status.textContent = "Joining…";
+  try {
+    await reloop.submit({ type: "waitlist", email });
+    status.textContent = "You're on the list! 🎉";
+  } catch (err) {
+    status.textContent = (err as Error).message;
+  }
+});
 ```
 
 ## Delivery semantics

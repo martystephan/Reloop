@@ -1,17 +1,34 @@
 # Reloop
 
-Self-hostable feedback SDK and dashboard.
+Self-hostable SDK and dashboard for bug reports, feedback, waitlist signups
+and questions.
 
 ```
 packages/core      @reloop-sdk/core     framework-agnostic client
-packages/react     @reloop-sdk/react    <ReloopProvider>, useFeedback(), <FeedbackWidget>
-packages/vue       @reloop-sdk/vue      ReloopPlugin, useReloop(), <FeedbackWidget>
+packages/react     @reloop-sdk/react    <ReloopProvider>, useSubmit(), <FeedbackWidget>
+packages/vue       @reloop-sdk/vue      ReloopPlugin, useSubmit(), <FeedbackWidget>
 packages/vanilla   @reloop-sdk/vanilla  script-tag embeddable widget (auto-init)
 apps/server        Express + better-sqlite3 + single-admin auth + ingest API
-apps/dashboard     React + Vite admin UI (login, projects, API keys, feedback)
+apps/dashboard     React + Vite admin UI (login, projects, API keys, submissions)
 apps/docs          Docusaurus SDK documentation site
 examples/react-demo  Vite app exercising @reloop-sdk/react end-to-end
 ```
+
+## Item types
+
+Every submission has a `type` with its own fields. `meta` and `email` are
+optional on every type:
+
+| Type        | Fields                                                |
+| ----------- | ----------------------------------------------------- |
+| `bug`       | `subject`, `message`, `screenshot?`, `email?`, `meta?`|
+| `feedback`  | `message`, `email?`, `meta?`                          |
+| `waitlist`  | `email`, `meta?`                                      |
+| `question`  | `subject`, `message`, `screenshot?`, `email?`, `meta?`|
+| `other`     | everything optional — escape hatch                    |
+
+Each API key is locked to a single type. In the dashboard, every submission
+carries a triage **status** (new / open / resolved / archived).
 
 ## Develop
 
@@ -48,9 +65,10 @@ persisted in the `reloop-data` volume.
 ## Using the SDK
 
 1. Sign in to the dashboard, create a project.
-2. Open the project → **API Keys** → **Create key**. The raw key
-   (`rl_pub_…`) is shown **once** with a copy button and a ready-to-paste
-   snippet. Only a SHA-256 hash is stored server-side.
+2. Open the project → **API Keys** → **Create key**. Pick the item type the
+   key may send. The raw key (`rl_pub_…`) is shown **once** with a copy
+   button and a ready-to-paste snippet. Only a SHA-256 hash is stored
+   server-side.
 3. Wire it up:
 
 ```ts
@@ -58,10 +76,13 @@ import { createClient } from "@reloop-sdk/core";
 
 const reloop = createClient({
   apiKey: "rl_pub_...",
-  endpoint: "https://feedback.example.com", // base URL; SDK appends /api/ingest
-  user: { id: "user_123", email: "marty@example.com" }, // optional
+  endpoint: "https://reloop.example.com", // base URL; SDK appends /api/ingest
 });
-reloop.submit({ type: "bug", message: "The export button 404s" });
+reloop.submit({
+  type: "bug",
+  subject: "Export button 404s",
+  message: "Clicking export on /reports returns a 404.",
+});
 ```
 
 React:
@@ -69,7 +90,7 @@ React:
 ```tsx
 import { ReloopProvider, FeedbackWidget } from "@reloop-sdk/react";
 
-<ReloopProvider apiKey="rl_pub_..." endpoint="https://feedback.example.com">
+<ReloopProvider apiKey="rl_pub_..." endpoint="https://reloop.example.com">
   <App />
   <FeedbackWidget />
 </ReloopProvider>;
@@ -79,8 +100,8 @@ Plain HTML:
 
 ```html
 <script
-  src="https://feedback.example.com/embed/reloop.global.js"
+  src="https://reloop.example.com/embed/reloop.global.js"
   data-reloop-key="rl_pub_..."
-  data-reloop-endpoint="https://feedback.example.com"
+  data-reloop-endpoint="https://reloop.example.com"
 ></script>
 ```

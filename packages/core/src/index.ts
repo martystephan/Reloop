@@ -1,9 +1,12 @@
 export { createClient, createNoopClient, ReloopError } from "./client.js";
 export type {
-  Feedback,
-  FeedbackType,
-  FeedbackUser,
-  IngestPayload,
+  BugItem,
+  FeedbackItem,
+  OtherItem,
+  QuestionItem,
   ReloopClient,
+  ReloopItem,
+  ReloopItemType,
   ReloopOptions,
+  WaitlistItem,
 } from "./types.js";

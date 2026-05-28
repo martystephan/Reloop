@@ -7,24 +7,50 @@ import { sendViaService, type NotificationServiceRow } from "../mailer.js";
 
 export const ingestRouter = Router();
 
-const feedbackItem = z.object({
-  type: z.enum(["bug", "idea", "praise", "rating"]),
-  message: z.string().min(1).max(5000),
-  rating: z.number().int().min(1).max(5).optional(),
-  url: z.string().url().max(2000).optional(),
-  meta: z.record(z.unknown()).optional(),
-});
+const meta = z.record(z.unknown()).optional();
+const subject = z.string().min(1).max(200);
+const message = z.string().min(1).max(5000);
+const email = z.string().email().max(320);
+// Base64 data URL of a screenshot; capped to keep payloads sane.
+const screenshot = z.string().max(1_500_000).optional();
 
-const payloadSchema = z.object({
-  user: z
-    .object({
-      id: z.string().max(200).optional(),
-      email: z.string().email().optional(),
-      name: z.string().max(200).optional(),
-    })
-    .optional(),
-  item: feedbackItem,
-});
+const itemSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("bug"),
+    subject,
+    message,
+    email: email.optional(),
+    screenshot,
+    meta,
+  }),
+  z.object({
+    type: z.literal("feedback"),
+    message,
+    email: email.optional(),
+    meta,
+  }),
+  z.object({
+    type: z.literal("waitlist"),
+    email,
+    meta,
+  }),
+  z.object({
+    type: z.literal("question"),
+    subject,
+    message,
+    email: email.optional(),
+    screenshot,
+    meta,
+  }),
+  z.object({
+    type: z.literal("other"),
+    subject: subject.optional(),
+    message: message.optional(),
+    email: email.optional(),
+    screenshot,
+    meta,
+  }),
+]);
 
 const limiter = rateLimit({
   windowMs: 60_000,
@@ -36,6 +62,7 @@ const limiter = rateLimit({
 interface KeyRow {
   id: string;
   project_id: string;
+  type: string;
   revoked_at: number | null;
 }
 
@@ -46,7 +73,7 @@ ingestRouter.post("/", limiter, (req, res) => {
 
   const keyRow = db
     .prepare(
-      "SELECT id, project_id, revoked_at FROM api_keys WHERE key_hash = ?",
+      "SELECT id, project_id, type, revoked_at FROM api_keys WHERE key_hash = ?",
     )
     .get(hashApiKey(raw)) as KeyRow | undefined;
 
@@ -54,28 +81,37 @@ ingestRouter.post("/", limiter, (req, res) => {
     return res.status(401).json({ error: "invalid_api_key" });
   }
 
-  const parsed = payloadSchema.safeParse(req.body);
+  const parsed = itemSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "invalid_body", issues: parsed.error.issues });
   }
 
-  const userMeta = parsed.data.user
-    ? JSON.stringify(parsed.data.user)
-    : null;
-  const item = parsed.data.item;
+  const item = parsed.data;
+  if (item.type !== keyRow.type) {
+    return res.status(403).json({
+      error: "type_not_allowed",
+      allowed: keyRow.type,
+    });
+  }
+
+  const subject = "subject" in item ? (item.subject ?? null) : null;
+  const message = "message" in item ? (item.message ?? null) : null;
+  const email = "email" in item ? (item.email ?? null) : null;
+  const screenshot = "screenshot" in item ? (item.screenshot ?? null) : null;
+
   const now = Date.now();
   const tx = db.transaction(() => {
     db.prepare(
-      `INSERT INTO feedback (id, project_id, type, message, rating, url, user_meta, feedback_meta, api_key_id, created_at)
+      `INSERT INTO submissions (id, project_id, type, subject, message, email, screenshot, meta, api_key_id, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).run(
       newId(),
       keyRow.project_id,
       item.type,
-      item.message,
-      item.rating ?? null,
-      item.url ?? null,
-      userMeta,
+      subject,
+      message,
+      email,
+      screenshot,
       item.meta ? JSON.stringify(item.meta) : null,
       keyRow.id,
       now,
@@ -102,7 +138,7 @@ ingestRouter.post("/", limiter, (req, res) => {
       .get(keyRow.project_id) as { name: string } | undefined;
     const projectName = project?.name ?? keyRow.project_id;
     for (const svc of linkedServices) {
-      sendViaService(svc, projectName, item, parsed.data.user ?? null);
+      sendViaService(svc, projectName, item);
     }
   }
 

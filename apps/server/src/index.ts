@@ -9,7 +9,7 @@ import { authRouter } from "./routes/auth.js";
 import { ingestRouter } from "./routes/ingest.js";
 import { projectsRouter } from "./routes/projects.js";
 import { keysRouter } from "./routes/keys.js";
-import { feedbackRouter } from "./routes/feedback.js";
+import { submissionsRouter } from "./routes/submissions.js";
 import { notificationServicesRouter } from "./routes/notification-services.js";
 
 const app = express();
@@ -17,7 +17,7 @@ app.disable("x-powered-by");
 app.use(helmet({ contentSecurityPolicy: false }));
 
 // SDK ingestion: open CORS (called from arbitrary customer sites).
-app.use("/api/ingest", cors(), express.json({ limit: "256kb" }));
+app.use("/api/ingest", cors(), express.json({ limit: "2mb" }));
 app.use("/api/ingest", ingestRouter);
 
 // Dashboard API: locked to known dashboard origins, cookies allowed.
@@ -30,7 +30,7 @@ app.get("/api/health", (_req, res) => res.json({ ok: true }));
 app.use("/api", authRouter);
 app.use("/api/projects", projectsRouter);
 app.use("/api", keysRouter);
-app.use("/api", feedbackRouter);
+app.use("/api", submissionsRouter);
 app.use("/api", notificationServicesRouter);
 
 // In production, serve the built dashboard from the same origin.

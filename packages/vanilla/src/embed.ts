@@ -1,13 +1,15 @@
+import { createClient } from "@reloop-sdk/core";
 import { mountWidget, type WidgetConfig } from "./widget.js";
 
-export { mountWidget };
+// Exposed on the `Reloop` global of the script-tag bundle.
+export { mountWidget, createClient };
 
 /**
  * Auto-init from the loading <script> tag:
  *
  *   <script src="https://cdn/reloop.global.js"
  *           data-reloop-key="rl_pub_..."
- *           data-reloop-endpoint="https://feedback.example.com"
+ *           data-reloop-endpoint="https://reloop.example.com"
  *           data-reloop-position="bottom-right"></script>
  */
 function autoInit() {

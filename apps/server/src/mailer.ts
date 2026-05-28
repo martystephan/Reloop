@@ -11,27 +11,41 @@ export interface NotificationServiceRow {
   smtp_pass: string;
   from_address: string;
   to_address: string;
+  include_subject: number;
+  include_message: number;
+  include_email: number;
+  include_meta: number;
+  include_screenshot: number;
   created_at: number;
 }
 
-interface FeedbackItem {
+interface SubmissionItem {
   type: string;
-  message: string;
-  rating?: number | null;
-  url?: string | null;
+  subject?: string;
+  message?: string;
+  email?: string;
+  screenshot?: string;
+  meta?: Record<string, unknown>;
 }
 
-interface UserMeta {
-  id?: string;
-  email?: string;
-  name?: string;
+/** Splits a data URL into the pieces nodemailer needs for an attachment. */
+function screenshotAttachment(dataUrl: string) {
+  const match = /^data:(.+?);base64,(.*)$/s.exec(dataUrl);
+  if (!match) return null;
+  const [, contentType, base64] = match;
+  const ext = contentType.split("/")[1]?.split("+")[0] ?? "png";
+  return {
+    filename: `screenshot.${ext}`,
+    content: base64,
+    encoding: "base64" as const,
+    contentType,
+  };
 }
 
 export function sendViaService(
   service: NotificationServiceRow,
   projectName: string,
-  item: FeedbackItem,
-  user: UserMeta | null,
+  item: SubmissionItem,
 ): void {
   const transport = nodemailer.createTransport({
     host: service.smtp_host,
@@ -40,31 +54,38 @@ export function sendViaService(
     auth: { user: service.smtp_user, pass: service.smtp_pass },
   });
 
-  const itemLines = [`[${item.type.toUpperCase()}] ${item.message}`];
-  if (item.rating != null) itemLines.push(`Rating: ${item.rating}/5`);
-  if (item.url) itemLines.push(`URL: ${item.url}`);
-
-  const userLine = user
-    ? [user.name, user.email, user.id ? `id:${user.id}` : null]
-        .filter(Boolean)
-        .join(" / ")
-    : null;
+  const lines: string[] = [];
+  if (service.include_subject && item.subject) {
+    lines.push(`Subject: ${item.subject}`);
+  }
+  if (service.include_email && item.email) {
+    lines.push(`Email: ${item.email}`);
+  }
+  if (service.include_message && item.message) {
+    lines.push("", item.message);
+  }
+  if (service.include_meta && item.meta && Object.keys(item.meta).length > 0) {
+    lines.push("", "Metadata:", JSON.stringify(item.meta, null, 2));
+  }
 
   const text = [
-    `New feedback received for project: ${projectName}`,
-    userLine ? `User: ${userLine}` : null,
+    `New ${item.type} submission for project: ${projectName}`,
     "",
-    itemLines.join("\n"),
-  ]
-    .filter((l) => l !== null)
-    .join("\n");
+    ...lines,
+  ].join("\n");
+
+  const attachment =
+    service.include_screenshot && item.screenshot
+      ? screenshotAttachment(item.screenshot)
+      : null;
 
   transport
     .sendMail({
       from: `Reloop <${service.from_address}>`,
       to: service.to_address,
-      subject: `[Reloop] New feedback — ${projectName}`,
+      subject: `[Reloop] New ${item.type} — ${projectName}`,
       text,
+      attachments: attachment ? [attachment] : undefined,
     })
     .catch((err) => {
       console.error(

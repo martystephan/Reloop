@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { MoreHorizontal } from "lucide-react";
-import { api, type ApiKey, type FeedbackItem } from "../api.js";
+import { ImageIcon, MoreHorizontal } from "lucide-react";
+import {
+  api,
+  type ApiKey,
+  type Submission,
+  type SubmissionDetail,
+  type SubmissionStatus,
+  type SubmissionType,
+} from "../api.js";
 import { CopyButton } from "../components/CopyButton.js";
 import { ThemeToggle } from "../components/ThemeToggle.js";
 import { Button } from "@/components/ui/button";
@@ -40,6 +47,25 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+const SUBMISSION_TYPES: { value: SubmissionType; label: string }[] = [
+  { value: "bug", label: "Bug" },
+  { value: "feedback", label: "Feedback" },
+  { value: "waitlist", label: "Waitlist" },
+  { value: "question", label: "Question" },
+  { value: "other", label: "Other" },
+];
+
+const SUBMISSION_STATUSES: { value: SubmissionStatus; label: string }[] = [
+  { value: "new", label: "New" },
+  { value: "open", label: "Open" },
+  { value: "resolved", label: "Resolved" },
+  { value: "archived", label: "Archived" },
+];
+
+function summarize(s: Submission): string {
+  return s.subject ?? s.email ?? s.message ?? "—";
+}
+
 export function ProjectDetail() {
   const { id = "" } = useParams();
   const [name, setName] = useState<string | null>(null);
@@ -65,13 +91,13 @@ export function ProjectDetail() {
       <h1 className="mt-2 text-xl font-semibold tracking-tight">
         {name ?? "Project"}
       </h1>
-      <Tabs defaultValue="feedback" className="mt-4">
+      <Tabs defaultValue="submissions" className="mt-4">
         <TabsList>
-          <TabsTrigger value="feedback">Feedback</TabsTrigger>
+          <TabsTrigger value="submissions">Submissions</TabsTrigger>
           <TabsTrigger value="keys">API Keys</TabsTrigger>
         </TabsList>
-        <TabsContent value="feedback">
-          <FeedbackTab projectId={id} />
+        <TabsContent value="submissions">
+          <SubmissionsTab projectId={id} />
         </TabsContent>
         <TabsContent value="keys">
           <KeysTab projectId={id} />
@@ -81,32 +107,127 @@ export function ProjectDetail() {
   );
 }
 
-function FeedbackTab({ projectId }: { projectId: string }) {
-  const [items, setItems] = useState<FeedbackItem[]>([]);
-  const [filter, setFilter] = useState("all");
-  const [selected, setSelected] = useState<FeedbackItem | null>(null);
+const STATUS_BADGE: Record<SubmissionStatus, string> = {
+  new: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
+  open: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+  resolved: "bg-green-500/15 text-green-600 dark:text-green-400",
+  archived: "bg-muted text-muted-foreground",
+};
+
+function StatusBadge({ status }: { status: SubmissionStatus }) {
+  return (
+    <Badge variant="outline" className={`capitalize ${STATUS_BADGE[status]}`}>
+      {status}
+    </Badge>
+  );
+}
+
+const PAGE_SIZE = 25;
+
+function SubmissionsTab({ projectId }: { projectId: string }) {
+  const [items, setItems] = useState<Submission[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(0);
+  const [keys, setKeys] = useState<ApiKey[]>([]);
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [keyFilter, setKeyFilter] = useState("all");
+  const [selected, setSelected] = useState<SubmissionDetail | null>(null);
 
   useEffect(() => {
     api
-      .listFeedback(projectId, filter === "all" ? undefined : filter)
-      .then((r) => setItems(r.items))
-      .catch(() => setItems([]));
-  }, [projectId, filter]);
+      .listKeys(projectId)
+      .then(setKeys)
+      .catch(() => setKeys([]));
+  }, [projectId]);
+
+  function load() {
+    api
+      .listSubmissions(projectId, {
+        type: typeFilter === "all" ? undefined : typeFilter,
+        status: statusFilter === "all" ? undefined : statusFilter,
+        keyId: keyFilter === "all" ? undefined : keyFilter,
+        limit: PAGE_SIZE,
+        offset: page * PAGE_SIZE,
+      })
+      .then((r) => {
+        setItems(r.items);
+        setTotal(r.total);
+      })
+      .catch(() => {
+        setItems([]);
+        setTotal(0);
+      });
+  }
+  useEffect(load, [projectId, page, typeFilter, statusFilter, keyFilter]);
+
+  // Changing a filter resets to the first page.
+  function setFilter(setter: (v: string) => void) {
+    return (value: string) => {
+      setter(value);
+      setPage(0);
+    };
+  }
+
+  function openDetail(id: string) {
+    api
+      .getSubmission(id)
+      .then(setSelected)
+      .catch(() => setSelected(null));
+  }
+
+  function applyStatus(id: string, status: SubmissionStatus) {
+    setItems((prev) => prev.map((s) => (s.id === id ? { ...s, status } : s)));
+    setSelected((prev) => (prev && prev.id === id ? { ...prev, status } : prev));
+  }
+
+  const start = total === 0 ? 0 : page * PAGE_SIZE + 1;
+  const end = Math.min((page + 1) * PAGE_SIZE, total);
 
   return (
     <>
-      <Select value={filter} onValueChange={setFilter}>
-        <SelectTrigger className="mb-4 w-full sm:w-48">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All types</SelectItem>
-          <SelectItem value="bug">Bug</SelectItem>
-          <SelectItem value="idea">Idea</SelectItem>
-          <SelectItem value="praise">Praise</SelectItem>
-          <SelectItem value="rating">Rating</SelectItem>
-        </SelectContent>
-      </Select>
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row">
+        <Select value={typeFilter} onValueChange={setFilter(setTypeFilter)}>
+          <SelectTrigger className="w-full sm:w-48">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All types</SelectItem>
+            {SUBMISSION_TYPES.map((t) => (
+              <SelectItem key={t.value} value={t.value}>
+                {t.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={statusFilter} onValueChange={setFilter(setStatusFilter)}>
+          <SelectTrigger className="w-full sm:w-48">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            {SUBMISSION_STATUSES.map((s) => (
+              <SelectItem key={s.value} value={s.value}>
+                {s.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={keyFilter} onValueChange={setFilter(setKeyFilter)}>
+          <SelectTrigger className="w-full sm:w-48">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All keys</SelectItem>
+            {keys.map((k) => (
+              <SelectItem key={k.id} value={k.id}>
+                {k.name}
+                {k.revoked_at ? " (revoked)" : ""}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
@@ -114,45 +235,43 @@ function FeedbackTab({ projectId }: { projectId: string }) {
           <TableHeader>
             <TableRow>
               <TableHead className="w-24">Type</TableHead>
-              <TableHead>Message</TableHead>
+              <TableHead>Summary</TableHead>
+              <TableHead className="w-28">Status</TableHead>
               <TableHead className="hidden md:table-cell w-40">Source key</TableHead>
-              <TableHead className="hidden md:table-cell w-20">Rating</TableHead>
               <TableHead className="hidden sm:table-cell w-44">Date</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {items.map((f) => (
+            {items.map((s) => (
               <TableRow
-                key={f.id}
+                key={s.id}
                 className="cursor-pointer"
-                onClick={() => setSelected(f)}
+                onClick={() => openDetail(s.id)}
               >
                 <TableCell>
                   <Badge variant="secondary" className="capitalize">
-                    {f.type}
+                    {s.type}
                   </Badge>
                 </TableCell>
                 <TableCell className="max-w-0">
                   <div
-                    className="truncate"
-                    title={f.url ? `${f.message} — ${f.url}` : f.message}
+                    className="flex items-center gap-1.5 truncate"
+                    title={summarize(s)}
                   >
-                    {f.message}
-                    {f.url && (
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        {f.url}
-                      </span>
+                    {s.has_screenshot === 1 && (
+                      <ImageIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                     )}
+                    <span className="truncate">{summarize(s)}</span>
                   </div>
                 </TableCell>
-                <TableCell className="hidden md:table-cell truncate max-w-[10rem] text-muted-foreground">
-                  {f.api_key_name ?? "—"}
+                <TableCell>
+                  <StatusBadge status={s.status} />
                 </TableCell>
-                <TableCell className="hidden md:table-cell text-muted-foreground">
-                  {f.rating != null ? `${f.rating}/5` : "—"}
+                <TableCell className="hidden md:table-cell truncate max-w-[10rem] text-muted-foreground">
+                  {s.api_key_name ?? "—"}
                 </TableCell>
                 <TableCell className="hidden sm:table-cell whitespace-nowrap text-muted-foreground">
-                  {new Date(f.created_at).toLocaleString()}
+                  {new Date(s.created_at).toLocaleString()}
                 </TableCell>
               </TableRow>
             ))}
@@ -162,7 +281,7 @@ function FeedbackTab({ projectId }: { projectId: string }) {
                   colSpan={5}
                   className="py-8 text-center text-muted-foreground"
                 >
-                  No feedback yet.
+                  No submissions found.
                 </TableCell>
               </TableRow>
             )}
@@ -171,45 +290,64 @@ function FeedbackTab({ projectId }: { projectId: string }) {
         </div>
       </Card>
 
+      <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground">
+        <span>
+          {total === 0 ? "No submissions" : `Showing ${start}–${end} of ${total}`}
+        </span>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page === 0}
+            onClick={() => setPage((p) => Math.max(p - 1, 0))}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={end >= total}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
+
       {selected && (
-        <FeedbackModal
-          feedback={selected}
+        <SubmissionModal
+          submission={selected}
           onClose={() => setSelected(null)}
+          onStatusChange={applyStatus}
         />
       )}
     </>
   );
 }
 
-function FeedbackModal({
-  feedback,
+function SubmissionModal({
+  submission,
   onClose,
+  onStatusChange,
 }: {
-  feedback: FeedbackItem;
+  submission: SubmissionDetail;
   onClose: () => void;
+  onStatusChange: (id: string, status: SubmissionStatus) => void;
 }) {
-  let meta = feedback.user_meta;
+  let meta = submission.meta;
   try {
     if (meta) meta = JSON.stringify(JSON.parse(meta), null, 2);
   } catch {
     /* leave raw */
   }
 
-  let feedbackMeta = feedback.feedback_meta;
-  let screenshot: string | null = null;
-  try {
-    if (feedbackMeta) {
-      const parsed = JSON.parse(feedbackMeta) as Record<string, unknown>;
-      if (typeof parsed.screenshot === "string") {
-        screenshot = parsed.screenshot;
-        delete parsed.screenshot;
-      }
-      feedbackMeta = Object.keys(parsed).length
-        ? JSON.stringify(parsed, null, 2)
-        : null;
+  async function changeStatus(status: SubmissionStatus) {
+    onStatusChange(submission.id, status); // optimistic
+    try {
+      await api.updateSubmissionStatus(submission.id, status);
+    } catch {
+      /* keep optimistic value; list reload will reconcile */
     }
-  } catch {
-    /* leave raw */
   }
 
   const rows: { label: string; value: React.ReactNode }[] = [
@@ -217,56 +355,60 @@ function FeedbackModal({
       label: "Type",
       value: (
         <Badge variant="secondary" className="capitalize">
-          {feedback.type}
+          {submission.type}
         </Badge>
       ),
     },
-    {
-      label: "Rating",
-      value: feedback.rating != null ? `${feedback.rating}/5` : "—",
-    },
-    {
-      label: "URL",
-      value: feedback.url ? (
-        <a
-          href={feedback.url}
-          target="_blank"
-          rel="noreferrer"
-          className="break-all font-medium text-primary underline-offset-4 hover:underline"
-        >
-          {feedback.url}
-        </a>
-      ) : (
-        "—"
-      ),
-    },
-    { label: "Source key", value: feedback.api_key_name ?? "—" },
-    {
-      label: "Date",
-      value: new Date(feedback.created_at).toLocaleString(),
-    },
-    { label: "ID", value: <code className="text-xs">{feedback.id}</code> },
   ];
+  if (submission.subject) {
+    rows.push({ label: "Subject", value: submission.subject });
+  }
+  if (submission.email) {
+    rows.push({ label: "Email", value: submission.email });
+  }
+  rows.push(
+    { label: "Source key", value: submission.api_key_name ?? "—" },
+    { label: "Date", value: new Date(submission.created_at).toLocaleString() },
+    { label: "ID", value: <code className="text-xs">{submission.id}</code> },
+  );
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Feedback details</DialogTitle>
+          <DialogTitle>Submission details</DialogTitle>
           <DialogDescription>
-            Submitted {new Date(feedback.created_at).toLocaleString()}
+            Submitted {new Date(submission.created_at).toLocaleString()}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          <div>
-            <p className="mb-1 text-xs font-medium text-muted-foreground">
-              Message
-            </p>
-            <p className="whitespace-pre-wrap rounded-md bg-muted p-3 text-sm">
-              {feedback.message}
-            </p>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground">Status</span>
+            <Select value={submission.status} onValueChange={changeStatus}>
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SUBMISSION_STATUSES.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+
+          {submission.message && (
+            <div>
+              <p className="mb-1 text-xs font-medium text-muted-foreground">
+                Message
+              </p>
+              <p className="whitespace-pre-wrap rounded-md bg-muted p-3 text-sm">
+                {submission.message}
+              </p>
+            </div>
+          )}
 
           <dl className="grid grid-cols-1 gap-y-2 text-sm sm:grid-cols-[7rem_1fr] sm:gap-x-4">
             {rows.map((r) => (
@@ -277,10 +419,10 @@ function FeedbackModal({
             ))}
           </dl>
 
-          {feedback.user_meta && (
+          {meta && (
             <div>
               <p className="mb-1 text-xs font-medium text-muted-foreground">
-                User metadata
+                Metadata
               </p>
               <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-md bg-muted p-3 font-mono text-xs">
                 {meta}
@@ -288,26 +430,15 @@ function FeedbackModal({
             </div>
           )}
 
-          {feedbackMeta && (
-            <div>
-              <p className="mb-1 text-xs font-medium text-muted-foreground">
-                Feedback metadata
-              </p>
-              <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-md bg-muted p-3 font-mono text-xs">
-                {feedbackMeta}
-              </pre>
-            </div>
-          )}
-
-          {screenshot && (
+          {submission.screenshot && (
             <div>
               <p className="mb-1 text-xs font-medium text-muted-foreground">
                 Screenshot
               </p>
-              <a href={screenshot} target="_blank" rel="noreferrer">
+              <a href={submission.screenshot} target="_blank" rel="noreferrer">
                 <img
-                  src={screenshot}
-                  alt="Feedback screenshot"
+                  src={submission.screenshot}
+                  alt="Submission screenshot"
                   className="max-h-96 w-full rounded-md border object-contain"
                 />
               </a>
@@ -326,6 +457,7 @@ function FeedbackModal({
 function KeysTab({ projectId }: { projectId: string }) {
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [name, setName] = useState("");
+  const [type, setType] = useState<SubmissionType>("feedback");
   const [open, setOpen] = useState(false);
   const [secret, setSecret] = useState<string | null>(null);
   const [keyToRevoke, setKeyToRevoke] = useState<ApiKey | null>(null);
@@ -341,8 +473,9 @@ function KeysTab({ projectId }: { projectId: string }) {
   async function create(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
-    const res = await api.createKey(projectId, name.trim());
+    const res = await api.createKey(projectId, name.trim(), type);
     setName("");
+    setType("feedback");
     setOpen(false);
     setSecret(res.secret);
     load();
@@ -366,7 +499,8 @@ function KeysTab({ projectId }: { projectId: string }) {
             <DialogHeader>
               <DialogTitle>Create API key</DialogTitle>
               <DialogDescription>
-                Give the key a name so you can recognize where it's used.
+                Name the key and choose which submission type it may send.
+                A key is locked to that single type.
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={create} className="flex flex-col gap-4">
@@ -376,6 +510,21 @@ function KeysTab({ projectId }: { projectId: string }) {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
+              <Select
+                value={type}
+                onValueChange={(v) => setType(v as SubmissionType)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SUBMISSION_TYPES.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <DialogFooter>
                 <Button
                   type="button"
@@ -399,6 +548,7 @@ function KeysTab({ projectId }: { projectId: string }) {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
+              <TableHead className="w-24">Type</TableHead>
               <TableHead>Key</TableHead>
               <TableHead className="hidden sm:table-cell">Status</TableHead>
               <TableHead className="w-12" />
@@ -408,6 +558,11 @@ function KeysTab({ projectId }: { projectId: string }) {
             {keys.map((k) => (
               <TableRow key={k.id}>
                 <TableCell className="font-medium max-w-[8rem] truncate">{k.name}</TableCell>
+                <TableCell>
+                  <Badge variant="secondary" className="capitalize">
+                    {k.type}
+                  </Badge>
+                </TableCell>
                 <TableCell>
                   <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
                     {k.prefix}
@@ -449,7 +604,7 @@ function KeysTab({ projectId }: { projectId: string }) {
             {keys.length === 0 && (
               <TableRow className="hover:bg-transparent">
                 <TableCell
-                  colSpan={4}
+                  colSpan={5}
                   className="py-8 text-center text-muted-foreground"
                 >
                   No keys yet.

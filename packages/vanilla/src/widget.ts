@@ -1,4 +1,4 @@
-import { createClient, type FeedbackType, type ReloopClient } from "@reloop-sdk/core";
+import { createClient, type ReloopClient } from "@reloop-sdk/core";
 
 export interface WidgetConfig {
   apiKey: string;
@@ -6,8 +6,6 @@ export interface WidgetConfig {
   title?: string;
   position?: "bottom-right" | "bottom-left";
 }
-
-const TYPES: FeedbackType[] = ["bug", "idea", "praise"];
 
 /** Mounts the floating feedback widget and returns the underlying client. */
 export function mountWidget(config: WidgetConfig): ReloopClient {
@@ -22,7 +20,6 @@ export function mountWidget(config: WidgetConfig): ReloopClient {
   };z-index:2147483000;font:14px system-ui,sans-serif`;
 
   let open = false;
-  let type: FeedbackType = "idea";
 
   function render() {
     root.innerHTML = "";
@@ -33,26 +30,10 @@ export function mountWidget(config: WidgetConfig): ReloopClient {
       panel.innerHTML = `<strong style="display:block;margin-bottom:10px">${
         config.title ?? "Send feedback"
       }</strong>
-        <div data-tabs style="display:flex;gap:6px;margin-bottom:10px"></div>
         <textarea name="message" rows="4" placeholder="Tell us what's on your mind…"
           style="width:100%;box-sizing:border-box;border-radius:8px;border:1px solid #e5e7eb;padding:8px;resize:vertical"></textarea>
         <p data-error style="display:none;margin:8px 0 0;color:#dc2626;font-size:13px"></p>
         <button type="submit" data-send style="margin-top:10px;width:100%;padding:8px 0;border-radius:8px;border:none;background:#2563eb;color:#fff;cursor:pointer">Send</button>`;
-
-      const tabs = panel.querySelector("[data-tabs]") as HTMLElement;
-      for (const t of TYPES) {
-        const b = document.createElement("button");
-        b.type = "button";
-        b.textContent = t;
-        b.style.cssText = `flex:1;padding:6px 0;border-radius:8px;border:1px solid #e5e7eb;text-transform:capitalize;cursor:pointer;${
-          type === t ? "background:#111827;color:#fff" : "background:#fff;color:#111827"
-        }`;
-        b.onclick = () => {
-          type = t;
-          render();
-        };
-        tabs.appendChild(b);
-      }
 
       panel.onsubmit = async (e) => {
         e.preventDefault();
@@ -64,7 +45,7 @@ export function mountWidget(config: WidgetConfig): ReloopClient {
         sendBtn.disabled = true;
         sendBtn.textContent = "Sending…";
         try {
-          await client.submit({ type, message: ta.value });
+          await client.submit({ type: "feedback", message: ta.value });
           panel.innerHTML =
             '<p>Thanks for the feedback! 🙌</p><button type="button" data-close>Close</button>';
           (panel.querySelector("[data-close]") as HTMLButtonElement).onclick = () => {

@@ -1,9 +1,12 @@
 export { mountWidget, type WidgetConfig } from "./widget.js";
 export { createClient } from "@reloop-sdk/core";
 export type {
-  Feedback,
-  FeedbackType,
-  FeedbackUser,
+  BugItem,
+  FeedbackItem,
+  QuestionItem,
   ReloopClient,
+  ReloopItem,
+  ReloopItemType,
   ReloopOptions,
+  WaitlistItem,
 } from "@reloop-sdk/core";

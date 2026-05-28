@@ -11,6 +11,7 @@ import { logout } from "../auth-client.js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
 import {
   Table,
@@ -49,7 +50,28 @@ const EMPTY_FORM: NotificationServiceInput = {
   smtp_pass: "",
   from_address: "",
   to_address: "",
+  include_subject: true,
+  include_message: true,
+  include_email: true,
+  include_meta: true,
+  include_screenshot: true,
 };
+
+const NOTIFICATION_FIELDS: {
+  key:
+    | "include_subject"
+    | "include_message"
+    | "include_email"
+    | "include_meta"
+    | "include_screenshot";
+  label: string;
+}[] = [
+  { key: "include_subject", label: "Subject" },
+  { key: "include_message", label: "Message" },
+  { key: "include_email", label: "Email address" },
+  { key: "include_meta", label: "Metadata" },
+  { key: "include_screenshot", label: "Screenshot (as attachment)" },
+];
 
 function ServiceForm({
   initial,
@@ -191,12 +213,10 @@ function ServiceForm({
           />
         </div>
         <div className="sm:col-span-2 flex items-center gap-2">
-          <input
+          <Checkbox
             id="svc-secure"
-            type="checkbox"
-            className="h-4 w-4 rounded border border-input"
             checked={form.smtp_secure}
-            onChange={(e) => set("smtp_secure", e.target.checked)}
+            onCheckedChange={(v) => set("smtp_secure", v === true)}
           />
           <div>
             <Label htmlFor="svc-secure" className="font-normal cursor-pointer">
@@ -206,6 +226,29 @@ function ServiceForm({
               Enable for port 465. Port 587 uses STARTTLS automatically — leave
               this unchecked.
             </p>
+          </div>
+        </div>
+        <div className="sm:col-span-2 flex flex-col gap-2">
+          <Label>Include in notification</Label>
+          <p className="text-xs text-muted-foreground">
+            Choose which submission fields appear in the email. Fields are only
+            shown when present on a submission.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+            {NOTIFICATION_FIELDS.map((f) => (
+              <label
+                key={f.key}
+                htmlFor={`svc-${f.key}`}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                <Checkbox
+                  id={`svc-${f.key}`}
+                  checked={form[f.key]}
+                  onCheckedChange={(v) => set(f.key, v === true)}
+                />
+                <span className="text-sm font-normal">{f.label}</span>
+              </label>
+            ))}
           </div>
         </div>
       </div>
@@ -319,8 +362,8 @@ function NotificationServicesDialog() {
           <DialogHeader>
             <DialogTitle>Notification services</DialogTitle>
             <DialogDescription>
-              Configure email services that can be linked to projects. When
-              feedback arrives for a linked project, an email is sent.
+              Configure email services that can be linked to projects. When a
+              submission arrives for a linked project, an email is sent.
             </DialogDescription>
           </DialogHeader>
 
@@ -340,6 +383,11 @@ function NotificationServicesDialog() {
                       smtp_pass: svc.smtp_pass,
                       from_address: svc.from_address,
                       to_address: svc.to_address,
+                      include_subject: svc.include_subject === 1,
+                      include_message: svc.include_message === 1,
+                      include_email: svc.include_email === 1,
+                      include_meta: svc.include_meta === 1,
+                      include_screenshot: svc.include_screenshot === 1,
                     }}
                     serviceId={svc.id}
                     onSave={(data) => handleUpdate(svc.id, data)}
@@ -513,8 +561,8 @@ function ProjectNotificationsDialog({
           Notifications — {project.name}
         </DialogTitle>
         <DialogDescription>
-          Select which notification services should be triggered when feedback
-          arrives for this project.
+          Select which notification services should be triggered when a
+          submission arrives for this project.
         </DialogDescription>
       </DialogHeader>
 
@@ -684,7 +732,7 @@ export function Projects() {
                 <TableHead className="hidden sm:table-cell">
                   Project ID
                 </TableHead>
-                <TableHead className="text-right">Feedback</TableHead>
+                <TableHead className="text-right">Submissions</TableHead>
                 <TableHead className="hidden sm:table-cell text-right">
                   Created
                 </TableHead>
@@ -713,7 +761,7 @@ export function Projects() {
                     {p.id}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
-                    {p.feedback_count}
+                    {p.submission_count}
                   </TableCell>
                   <TableCell className="hidden sm:table-cell text-right text-muted-foreground whitespace-nowrap">
                     {new Date(p.created_at).toLocaleString()}

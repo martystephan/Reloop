@@ -33,7 +33,16 @@ const serviceSchema = z.object({
   smtp_pass: z.string().max(500),
   from_address: z.string().email().max(200),
   to_address: z.string().email().max(200),
+  // Which submission fields to include in the notification email.
+  include_subject: z.boolean().optional(),
+  include_message: z.boolean().optional(),
+  include_email: z.boolean().optional(),
+  include_meta: z.boolean().optional(),
+  include_screenshot: z.boolean().optional(),
 });
+
+const bit = (value: boolean | undefined, fallback: boolean): number =>
+  (value ?? fallback) ? 1 : 0;
 
 notificationServicesRouter.post("/notification-services", (req, res) => {
   const parsed = serviceSchema.safeParse(req.body);
@@ -44,8 +53,9 @@ notificationServicesRouter.post("/notification-services", (req, res) => {
   const id = newId();
   db.prepare(
     `INSERT INTO notification_services
-     (id, name, type, smtp_host, smtp_port, smtp_secure, smtp_user, smtp_pass, from_address, to_address, created_at)
-     VALUES (?, ?, 'email', ?, ?, ?, ?, ?, ?, ?, ?)`,
+     (id, name, type, smtp_host, smtp_port, smtp_secure, smtp_user, smtp_pass, from_address, to_address,
+      include_subject, include_message, include_email, include_meta, include_screenshot, created_at)
+     VALUES (?, ?, 'email', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     id,
     rest.name,
@@ -56,6 +66,11 @@ notificationServicesRouter.post("/notification-services", (req, res) => {
     rest.smtp_pass,
     rest.from_address,
     rest.to_address,
+    bit(rest.include_subject, true),
+    bit(rest.include_message, true),
+    bit(rest.include_email, true),
+    bit(rest.include_meta, false),
+    bit(rest.include_screenshot, false),
     Date.now(),
   );
   const row = db
@@ -83,10 +98,15 @@ notificationServicesRouter.patch("/notification-services/:id", (req, res) => {
       ? existing.smtp_pass
       : d.smtp_pass;
 
+  const keepBit = (value: boolean | undefined, current: number): number =>
+    value !== undefined ? (value ? 1 : 0) : current;
+
   db.prepare(
     `UPDATE notification_services SET
        name = ?, smtp_host = ?, smtp_port = ?, smtp_secure = ?,
-       smtp_user = ?, smtp_pass = ?, from_address = ?, to_address = ?
+       smtp_user = ?, smtp_pass = ?, from_address = ?, to_address = ?,
+       include_subject = ?, include_message = ?, include_email = ?,
+       include_meta = ?, include_screenshot = ?
      WHERE id = ?`,
   ).run(
     d.name ?? existing.name,
@@ -97,6 +117,11 @@ notificationServicesRouter.patch("/notification-services/:id", (req, res) => {
     smtp_pass,
     d.from_address ?? existing.from_address,
     d.to_address ?? existing.to_address,
+    keepBit(d.include_subject, existing.include_subject),
+    keepBit(d.include_message, existing.include_message),
+    keepBit(d.include_email, existing.include_email),
+    keepBit(d.include_meta, existing.include_meta),
+    keepBit(d.include_screenshot, existing.include_screenshot),
     req.params.id,
   );
 
@@ -150,6 +175,11 @@ notificationServicesRouter.post(
       smtp_pass: resolvedPass,
       from_address: rest.from_address,
       to_address: rest.to_address,
+      include_subject: bit(rest.include_subject, true),
+      include_message: bit(rest.include_message, true),
+      include_email: bit(rest.include_email, true),
+      include_meta: bit(rest.include_meta, false),
+      include_screenshot: bit(rest.include_screenshot, false),
       created_at: 0,
     };
 

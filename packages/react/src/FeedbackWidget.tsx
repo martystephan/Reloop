@@ -1,6 +1,5 @@
 import { useState } from "react";
-import type { FeedbackType } from "@reloop-sdk/core";
-import { useFeedback } from "./useFeedback.js";
+import { useSubmit } from "./useSubmit.js";
 
 export interface FeedbackWidgetProps {
   /** Heading shown at the top of the panel. */
@@ -8,12 +7,6 @@ export interface FeedbackWidgetProps {
   /** Where the launcher button sits. Default "bottom-right". */
   position?: "bottom-right" | "bottom-left";
 }
-
-const TYPES: { value: FeedbackType; label: string }[] = [
-  { value: "bug", label: "Bug" },
-  { value: "idea", label: "Idea" },
-  { value: "praise", label: "Praise" },
-];
 
 const FONT =
   "14px -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
@@ -26,9 +19,8 @@ export function FeedbackWidget({
   title = "Send feedback",
   position = "bottom-right",
 }: FeedbackWidgetProps) {
-  const { submit, status, error, reset } = useFeedback();
+  const { submit, status, error, reset } = useSubmit();
   const [open, setOpen] = useState(false);
-  const [type, setType] = useState<FeedbackType>("idea");
   const [message, setMessage] = useState("");
 
   const side = position === "bottom-right" ? { right: 20 } : { left: 20 };
@@ -36,7 +28,7 @@ export function FeedbackWidget({
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!message.trim()) return;
-    await submit({ type, message });
+    await submit({ type: "feedback", message });
     setMessage("");
   }
 
@@ -129,32 +121,6 @@ export function FeedbackWidget({
             </div>
           ) : (
             <>
-              <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-                {TYPES.map((t) => {
-                  const active = type === t.value;
-                  return (
-                    <button
-                      key={t.value}
-                      type="button"
-                      onClick={() => setType(t.value)}
-                      style={{
-                        flex: 1,
-                        padding: "8px 0",
-                        fontSize: 13,
-                        borderRadius: 10,
-                        border: `1px solid ${active ? INK : BORDER}`,
-                        background: active ? INK : "#fff",
-                        color: active ? "#fff" : INK,
-                        cursor: "pointer",
-                        transition: "background 120ms, border-color 120ms",
-                      }}
-                    >
-                      {t.label}
-                    </button>
-                  );
-                })}
-              </div>
-
               <textarea
                 className="reloop-field"
                 value={message}

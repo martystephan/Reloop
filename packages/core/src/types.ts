@@ -1,47 +1,71 @@
-export type FeedbackType = "bug" | "idea" | "praise" | "rating";
+export type ReloopItemType =
+  | "bug"
+  | "feedback"
+  | "waitlist"
+  | "question"
+  | "other";
 
-export interface FeedbackUser {
-  id?: string;
-  email?: string;
-  name?: string;
-}
-
-export interface Feedback {
-  /** What kind of feedback this is. */
-  type: FeedbackType;
-  /** Free-text message from the user. */
+export interface BugItem {
+  type: "bug";
+  subject: string;
   message: string;
-  /** Optional 1-5 rating, typically used with type "rating". */
-  rating?: number;
-  /** Page / screen the feedback was submitted from. Defaults to location.href. */
-  url?: string;
-  /** Arbitrary metadata attached to the feedback. */
+  /** Optional contact email — lets you reply or include the reporter in mailings. */
+  email?: string;
+  /** Optional base64-encoded screenshot (data URL). */
+  screenshot?: string;
   meta?: Record<string, unknown>;
 }
+
+export interface FeedbackItem {
+  type: "feedback";
+  message: string;
+  email?: string;
+  meta?: Record<string, unknown>;
+}
+
+export interface WaitlistItem {
+  type: "waitlist";
+  email: string;
+  meta?: Record<string, unknown>;
+}
+
+export interface QuestionItem {
+  type: "question";
+  subject: string;
+  message: string;
+  email?: string;
+  screenshot?: string;
+  meta?: Record<string, unknown>;
+}
+
+/** Escape hatch: everything optional, for anything that doesn't fit the others. */
+export interface OtherItem {
+  type: "other";
+  subject?: string;
+  message?: string;
+  email?: string;
+  screenshot?: string;
+  meta?: Record<string, unknown>;
+}
+
+export type ReloopItem =
+  | BugItem
+  | FeedbackItem
+  | WaitlistItem
+  | QuestionItem
+  | OtherItem;
 
 export interface ReloopOptions {
   /** Publishable API key created in the dashboard (rl_pub_...). */
   apiKey: string;
   /**
-   * Base URL of the Reloop server, e.g. https://feedback.example.com
+   * Base URL of the Reloop server, e.g. https://reloop.example.com
    * The SDK appends the ingest path itself.
    */
   endpoint: string;
-  /**
-   * User to associate with submitted feedback. Optional; can also be set
-   * (or changed, e.g. after login) later via client.identify().
-   */
-  user?: FeedbackUser;
 }
 
 export interface ReloopClient {
-  /** Associate subsequent feedback with a user. */
-  identify(user: FeedbackUser): void;
-  /** Send a feedback item. Resolves on success, rejects on failure. */
-  submit(feedback: Feedback): Promise<void>;
-}
-
-export interface IngestPayload {
-  user?: FeedbackUser;
-  item: Feedback;
+  /** Send an item. Resolves on success, rejects on failure. */
+  submit(item: ReloopItem): Promise<void>;
 }

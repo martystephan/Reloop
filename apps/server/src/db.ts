@@ -23,6 +23,7 @@ export function migrate(): void {
       id           TEXT PRIMARY KEY,
       project_id   TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
       name         TEXT NOT NULL,
+      type         TEXT NOT NULL DEFAULT 'feedback',
       key_hash     TEXT NOT NULL UNIQUE,
       prefix       TEXT NOT NULL,
       created_at   INTEGER NOT NULL,
@@ -31,47 +32,62 @@ export function migrate(): void {
     );
     CREATE INDEX IF NOT EXISTS idx_api_keys_hash ON api_keys(key_hash);
 
-    CREATE TABLE IF NOT EXISTS feedback (
+    CREATE TABLE IF NOT EXISTS submissions (
       id         TEXT PRIMARY KEY,
       project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
       type       TEXT NOT NULL,
-      message    TEXT NOT NULL,
-      rating     INTEGER,
-      url        TEXT,
-      user_meta  TEXT,
+      subject    TEXT,
+      message    TEXT,
+      email      TEXT,
+      screenshot TEXT,
+      meta       TEXT,
+      status     TEXT NOT NULL DEFAULT 'new',
+      api_key_id TEXT,
       created_at INTEGER NOT NULL
     );
-    CREATE INDEX IF NOT EXISTS idx_feedback_project ON feedback(project_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_submissions_project ON submissions(project_id, created_at DESC);
   `);
 
-  // Added after initial release: track which API key submitted each item.
-  const hasApiKeyId = db
-    .prepare("SELECT 1 FROM pragma_table_info('feedback') WHERE name = ?")
-    .get("api_key_id");
-  if (!hasApiKeyId) {
-    db.exec("ALTER TABLE feedback ADD COLUMN api_key_id TEXT");
+  // Added after a key could only carry a single submission type.
+  const hasKeyType = db
+    .prepare("SELECT 1 FROM pragma_table_info('api_keys') WHERE name = ?")
+    .get("type");
+  if (!hasKeyType) {
+    db.exec("ALTER TABLE api_keys ADD COLUMN type TEXT NOT NULL DEFAULT 'feedback'");
   }
 
-  const hasFeedbackMeta = db
-    .prepare("SELECT 1 FROM pragma_table_info('feedback') WHERE name = ?")
-    .get("feedback_meta");
-  if (!hasFeedbackMeta) {
-    db.exec("ALTER TABLE feedback ADD COLUMN feedback_meta TEXT");
+  const submissionCols = db
+    .prepare("SELECT name FROM pragma_table_info('submissions')")
+    .all() as { name: string }[];
+  const hasCol = (name: string) => submissionCols.some((c) => c.name === name);
+
+  // `image` was renamed to `screenshot`.
+  if (hasCol("image") && !hasCol("screenshot")) {
+    db.exec("ALTER TABLE submissions RENAME COLUMN image TO screenshot");
+  }
+  // Dashboard-managed triage state.
+  if (!hasCol("status")) {
+    db.exec("ALTER TABLE submissions ADD COLUMN status TEXT NOT NULL DEFAULT 'new'");
   }
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS notification_services (
-      id           TEXT PRIMARY KEY,
-      name         TEXT NOT NULL,
-      type         TEXT NOT NULL DEFAULT 'email',
-      smtp_host    TEXT NOT NULL,
-      smtp_port    INTEGER NOT NULL,
-      smtp_secure  INTEGER NOT NULL DEFAULT 0,
-      smtp_user    TEXT NOT NULL,
-      smtp_pass    TEXT NOT NULL,
-      from_address TEXT NOT NULL,
-      to_address   TEXT NOT NULL,
-      created_at   INTEGER NOT NULL
+      id                 TEXT PRIMARY KEY,
+      name               TEXT NOT NULL,
+      type               TEXT NOT NULL DEFAULT 'email',
+      smtp_host          TEXT NOT NULL,
+      smtp_port          INTEGER NOT NULL,
+      smtp_secure        INTEGER NOT NULL DEFAULT 0,
+      smtp_user          TEXT NOT NULL,
+      smtp_pass          TEXT NOT NULL,
+      from_address       TEXT NOT NULL,
+      to_address         TEXT NOT NULL,
+      include_subject    INTEGER NOT NULL DEFAULT 1,
+      include_message    INTEGER NOT NULL DEFAULT 1,
+      include_email      INTEGER NOT NULL DEFAULT 1,
+      include_meta       INTEGER NOT NULL DEFAULT 0,
+      include_screenshot INTEGER NOT NULL DEFAULT 0,
+      created_at         INTEGER NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS project_notification_services (
@@ -80,4 +96,21 @@ export function migrate(): void {
       PRIMARY KEY (project_id, service_id)
     );
   `);
+
+  // Configurable notification content, added after services were SMTP-only.
+  const serviceCols = db
+    .prepare("SELECT name FROM pragma_table_info('notification_services')")
+    .all() as { name: string }[];
+  const addServiceCol = (name: string, def: 0 | 1) => {
+    if (!serviceCols.some((c) => c.name === name)) {
+      db.exec(
+        `ALTER TABLE notification_services ADD COLUMN ${name} INTEGER NOT NULL DEFAULT ${def}`,
+      );
+    }
+  };
+  addServiceCol("include_subject", 1);
+  addServiceCol("include_message", 1);
+  addServiceCol("include_email", 1);
+  addServiceCol("include_meta", 0);
+  addServiceCol("include_screenshot", 0);
 }

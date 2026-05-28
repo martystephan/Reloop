@@ -2,8 +2,8 @@ import { useState } from "react";
 import {
   ReloopProvider,
   FeedbackWidget,
-  useFeedback,
-  type FeedbackType,
+  useSubmit,
+  type ReloopItemType,
 } from "@reloop-sdk/react";
 
 const apiKey = import.meta.env.VITE_RELOOP_KEY ?? "";
@@ -13,9 +13,11 @@ const endpoint = import.meta.env.VITE_RELOOP_ENDPOINT || window.location.origin;
 type MetaRow = { key: string; value: string };
 
 function CustomForm() {
-  const { submit, status, error, reset } = useFeedback();
-  const [type, setType] = useState<FeedbackType>("idea");
+  const { submit, status, error, reset } = useSubmit();
+  const [type, setType] = useState<ReloopItemType>("feedback");
+  const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
+  const [email, setEmail] = useState("");
   const [metaRows, setMetaRows] = useState<MetaRow[]>([
     { key: "feature", value: "" },
   ]);
@@ -30,59 +32,92 @@ function CustomForm() {
     setMetaRows((rows) => rows.filter((_, j) => i !== j));
   }
 
+  const needsSubject = type === "bug" || type === "question";
+  const needsMessage = type !== "waitlist";
+  const needsEmail = type === "waitlist";
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!message.trim()) return;
-    const customMeta: Record<string, string> = {};
+    const meta: Record<string, string> = {
+      source: "react-demo",
+      pathname: window.location.pathname,
+      submittedAt: new Date().toISOString(),
+    };
     for (const { key, value } of metaRows) {
       const k = key.trim();
-      if (k) customMeta[k] = value;
+      if (k) meta[k] = value;
     }
-    await submit({
-      type,
-      message,
-      meta: {
-        source: "react-demo",
-        form: "custom",
-        pathname: window.location.pathname,
-        viewport: { w: window.innerWidth, h: window.innerHeight },
-        locale: navigator.language,
-        submittedAt: new Date().toISOString(),
-        ...customMeta,
-      },
-    });
+
+    if (type === "bug") {
+      if (!subject.trim() || !message.trim()) return;
+      await submit({ type, subject, message, meta });
+    } else if (type === "question") {
+      if (!subject.trim() || !message.trim()) return;
+      await submit({ type, subject, message, meta });
+    } else if (type === "waitlist") {
+      if (!email.trim()) return;
+      await submit({ type, email, meta });
+    } else {
+      if (!message.trim()) return;
+      await submit({ type: "feedback", message, meta });
+    }
+    setSubject("");
     setMessage("");
+    setEmail("");
   }
 
   return (
     <form onSubmit={onSubmit} style={{ maxWidth: 420 }}>
-      <h2>Custom form (useFeedback)</h2>
+      <h2>Custom form (useSubmit)</h2>
       <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
-        {(["bug", "idea", "praise", "rating"] as FeedbackType[]).map((t) => (
-          <button
-            type="button"
-            key={t}
-            onClick={() => setType(t)}
-            style={{
-              padding: "6px 10px",
-              textTransform: "capitalize",
-              background: type === t ? "#111827" : "#fff",
-              color: type === t ? "#fff" : "#111827",
-              border: "1px solid #ccc",
-              borderRadius: 6,
-            }}
-          >
-            {t}
-          </button>
-        ))}
+        {(["bug", "feedback", "waitlist", "question"] as ReloopItemType[]).map(
+          (t) => (
+            <button
+              type="button"
+              key={t}
+              onClick={() => setType(t)}
+              style={{
+                padding: "6px 10px",
+                textTransform: "capitalize",
+                background: type === t ? "#111827" : "#fff",
+                color: type === t ? "#fff" : "#111827",
+                border: "1px solid #ccc",
+                borderRadius: 6,
+              }}
+            >
+              {t}
+            </button>
+          ),
+        )}
       </div>
-      <textarea
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        rows={4}
-        placeholder="Type some feedback…"
-        style={{ width: "100%", padding: 8 }}
-      />
+
+      {needsSubject && (
+        <input
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          placeholder="Subject"
+          style={{ width: "100%", padding: 8, marginBottom: 8 }}
+        />
+      )}
+      {needsEmail && (
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@example.com"
+          style={{ width: "100%", padding: 8, marginBottom: 8 }}
+        />
+      )}
+      {needsMessage && (
+        <textarea
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          rows={4}
+          placeholder="Type your message…"
+          style={{ width: "100%", padding: 8 }}
+        />
+      )}
+
       <fieldset
         style={{
           marginTop: 12,
@@ -164,16 +199,14 @@ export function App() {
   }
 
   return (
-    <ReloopProvider
-      apiKey={apiKey}
-      endpoint={endpoint}
-      user={{ id: "demo-user" }}
-    >
+    <ReloopProvider apiKey={apiKey} endpoint={endpoint}>
       <div style={{ padding: 32 }}>
         <h1>Reloop React Demo</h1>
         <p>
           Endpoint: <code>{endpoint}</code>. Submit below or use the floating
-          widget — then check the dashboard’s Feedback tab.
+          widget — then check the dashboard’s Submissions tab. Note: each API
+          key is locked to a single type, so the form’s type must match the
+          key’s type.
         </p>
         <CustomForm />
       </div>
